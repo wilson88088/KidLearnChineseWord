@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>國小國文練習系統</title>
+<style>
+:root {
+  --primary: #4A90D9;
+  --primary-dark: #3570B0;
+  --accent: #FF8C42;
+  --success: #4CAF50;
+  --danger: #E74C3C;
+  --warning: #F39C12;
+  --bg: #F0F4F8;
+  --card: #FFFFFF;
+  --text: #2C3E50;
+  --text-light: #7F8C8D;
+  --border: #E0E6ED;
+  --shadow: 0 2px 8px rgba(0,0,0,0.1);
+  --radius: 12px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 18px;
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+#app { max-width: 600px; margin: 0 auto; padding: 0 0 80px 0; }
+
+/* Header */
+.header {
+  background: linear-gradient(135deg, var(--primary), #6BB5FF);
+  color: #fff;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 10px rgba(74,144,217,0.3);
+}
+.header .back-btn {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: #fff;
+  font-size: 22px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.header .back-btn:active { background: rgba(255,255,255,0.35); }
+.header h1 { font-size: 20px; font-weight: 700; }
+.header .header-actions { margin-left: auto; display: flex; gap: 8px; }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.96); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:active { background: var(--primary-dark); }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-accent:active { background: #E07530; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-success:active { background: #3D9140; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:active { background: #C0392B; }
+.btn-outline {
+  background: transparent;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+}
+.btn-lg { padding: 16px 32px; font-size: 20px; border-radius: 16px; }
+.btn-sm { padding: 8px 16px; font-size: 15px; }
+.btn-block { width: 100%; }
+.btn-icon {
+  width: 48px; height: 48px; padding: 0;
+  border-radius: 50%; font-size: 22px;
+}
+.btn-icon-sm { width: 40px; height: 40px; font-size: 18px; }
+
+/* Cards */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  margin: 12px 16px;
+}
+.card-clickable { cursor: pointer; transition: transform 0.1s; }
+.card-clickable:active { transform: scale(0.98); }
+
+/* Lists */
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  gap: 12px;
+  transition: background 0.1s;
+}
+.list-item:first-child { border-radius: var(--radius) var(--radius) 0 0; }
+.list-item:last-child { border-radius: 0 0 var(--radius) var(--radius); border-bottom: none; }
+.list-item:only-child { border-radius: var(--radius); }
+.list-item:active { background: #EBF2FA; }
+.list-item .item-text { flex: 1; }
+.list-item .item-text h3 { font-size: 19px; font-weight: 600; }
+.list-item .item-text p { font-size: 14px; color: var(--text-light); }
+.list-item .arrow { color: var(--text-light); font-size: 20px; }
+.list-container { margin: 12px 16px; box-shadow: var(--shadow); border-radius: var(--radius); overflow: hidden; }
+
+/* Form */
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 16px; }
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 18px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+.form-input:focus { border-color: var(--primary); outline: none; }
+
+/* Tags / Chips */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  background: #EBF2FA;
+  border-radius: 20px;
+  font-size: 15px;
+  gap: 6px;
+  margin: 4px;
+}
+.chip-remove {
+  background: none; border: none;
+  color: var(--danger); font-size: 16px;
+  cursor: pointer; padding: 0 2px;
+}
+
+/* Handwriting Canvas */
+.canvas-area {
+  border: 3px dashed var(--border);
+  border-radius: var(--radius);
+  background: #FEFEFE;
+  touch-action: none;
+  position: relative;
+}
+.canvas-area canvas { display: block; width: 100%; height: 100%; }
+
+/* Score display */
+.score-display {
+  text-align: center;
+  padding: 40px 20px;
+}
+.score-number {
+  font-size: 72px;
+  font-weight: 800;
+  margin: 16px 0;
+}
+.score-great { color: var(--success); }
+.score-ok { color: var(--warning); }
+.score-low { color: var(--danger); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200; padding: 20px;
+}
+.modal {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 28px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+.modal h2 { margin-bottom: 16px; font-size: 22px; }
+.modal .btn { margin-top: 12px; }
+
+/* Badge */
+.badge {
+  background: var(--accent);
+  color: #fff;
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Home menu grid */
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px;
+}
+.home-card {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 24px 16px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.home-card:active { transform: scale(0.96); }
+.home-card .icon { font-size: 40px; margin-bottom: 8px; }
+.home-card .label { font-size: 17px; font-weight: 600; }
+.home-card.wide { grid-column: span 2; }
+
+/* Review card */
+.review-card {
+  text-align: center;
+  padding: 24px;
+}
+.review-char {
+  font-size: 120px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 12px 0;
+  color: var(--text);
+}
+.review-zhuyin {
+  font-size: 36px;
+  color: var(--primary);
+  margin-bottom: 12px;
+}
+.review-stroke-container {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+}
+
+/* Test layout */
+.test-container {
+  padding: 16px;
+}
+.test-prompt {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.test-zhuyin {
+  font-size: 48px;
+  color: var(--primary);
+  font-weight: 700;
+}
+.test-progress {
+  font-size: 15px;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
+.test-canvas-wrapper {
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 350px;
+  margin: 0 auto 16px;
+}
+.test-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.test-answer {
+  font-size: 64px;
+  font-weight: 700;
+  color: var(--success);
+  text-align: center;
+  margin: 8px 0;
+  min-height: 80px;
+}
+
+/* Eval card */
+.eval-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--card);
+  border-radius: var(--radius);
+  margin: 8px 16px;
+  box-shadow: var(--shadow);
+}
+.eval-item img {
+  width: 100px;
+  height: 100px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  object-fit: contain;
+  background: #fff;
+}
+.eval-info {
+  flex: 1;
+  text-align: center;
+}
+.eval-info .char { font-size: 32px; font-weight: 700; }
+.eval-info .zhuyin { font-size: 20px; color: var(--primary); }
+.eval-btns { display: flex; flex-direction: column; gap: 8px; }
+.eval-marked { font-size: 28px; font-weight: 700; }
+.eval-correct { color: var(--success); }
+.eval-wrong { color: var(--danger); }
+
+/* Checkbox list */
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.check-item:last-child { border-bottom: none; }
+.check-box {
+  width: 28px; height: 28px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: #fff;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.check-item.checked .check-box {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+.check-item .check-label { font-size: 18px; flex: 1; }
+
+/* Points bar */
+.points-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-light);
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 16px; }
+
+/* Floating action button */
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  font-size: 30px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(74,144,217,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.fab:active { transform: scale(0.92); }
+
+/* Tab bar for word detail */
+.tab-bar {
+  display: flex;
+  border-bottom: 2px solid var(--border);
+  margin: 0 16px;
+}
+.tab {
+  flex: 1;
+  padding: 12px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-light);
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  font-family: inherit;
+}
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+/* Record bar chart */
+.record-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+.record-bar .bar {
+  height: 20px;
+  border-radius: 10px;
+  min-width: 4px;
+}
+.bar-correct { background: var(--success); }
+.bar-wrong { background: var(--danger); }
+
+/* OCR loading */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  gap: 16px;
+}
+.spinner {
+  width: 48px; height: 48px;
+  border: 4px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Reward item */
+.reward-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+}
+.reward-item:last-child { border-bottom: none; }
+.reward-info { flex: 1; }
+.reward-info h3 { font-size: 18px; }
+.reward-info .cost { color: var(--accent); font-weight: 600; font-size: 15px; }
+
+/* Utility */
+.text-center { text-align: center; }
+.mt-12 { margin-top: 12px; }
+.mt-16 { margin-top: 16px; }
+.mb-12 { margin-bottom: 12px; }
+.p-16 { padding: 16px; }
+.gap-12 { gap: 12px; }
+.flex { display: flex; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-col { display: flex; flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.hidden { display: none !important; }
+
+/* Animations */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.fade-in { animation: fadeIn 0.3s ease-out; }
+@keyframes pop { 0% { transform: scale(0.5); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+.pop-in { animation: pop 0.4s ease-out; }
+
+/* Image viewer */
+.img-viewer {
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: var(--radius);
+}
+
+/* Delete word btn */
+.word-delete {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  opacity: 0.6;
+}
+.word-delete:active { opacity: 1; }
+
+/* Responsive */
+@media (max-width: 400px) {
+  .review-char { font-size: 80px; }
+  .test-zhuyin { font-size: 36px; }
+  .btn-lg { padding: 14px 24px; font-size: 18px; }
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cnchar@3.2.4/cnchar.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/cnchar-trad@3.2.4/cnchar.trad.min.js"></script>
+<script>
+// ========== EMBEDDED ZHUYIN DICTIONARY (836 common characters) ==========
+const ZHUYIN_DICT={"一":"ㄧ","七":"ㄑㄧ","三":"ㄙㄢ","上":"ㄕㄤˋ","下":"ㄒㄧㄚˋ","不":"ㄅㄨˋ","且":"ㄑㄧㄝˇ","世":"ㄕˋ","丟":"ㄉㄧㄡ","中":"ㄓㄨㄥ","主":"ㄓㄨˇ","乘":"ㄔㄥˊ","九":"ㄐㄧㄡˇ","也":"ㄧㄝˇ","乾":"ㄍㄢ","亂":"ㄌㄨㄢˋ","了":"ㄌㄜ˙","二":"ㄦˋ","五":"ㄨˇ","些":"ㄒㄧㄝ","交":"ㄐㄧㄠ","京":"ㄐㄧㄥ","亮":"ㄌㄧㄤˋ","人":"ㄖㄣˊ","什":"ㄕㄣˊ","今":"ㄐㄧㄣ","他":"ㄊㄚ","以":"ㄧˇ","件":"ㄐㄧㄢˋ","任":"ㄖㄣˋ","休":"ㄒㄧ","伸":"ㄕㄣ","但":"ㄉㄢˋ","位":"ㄨㄟˋ","住":"ㄓㄨˋ","何":"ㄏㄜˊ","作":"ㄗㄨㄛˋ","你":"ㄋㄧˇ","來":"ㄌㄞˊ","便":"ㄆㄧㄢˊ","保":"ㄅㄠˇ","信":"ㄒㄧㄣˋ","修":"ㄒㄧㄡ","個":"ㄍㄜˋ","們":"ㄇㄣ˙","倒":"ㄉㄠˇ","候":"ㄏㄡˋ","假":"ㄐㄧㄚˋ","做":"ㄗㄨㄛˋ","停":"ㄊㄧㄥˊ","健":"ㄐㄧㄢˋ","備":"ㄅㄟˋ","傲":"ㄠˋ","傳":"ㄔㄨㄢˊ","傻":"ㄕㄚˇ","價":"ㄐㄧㄚˋ","元":"ㄩㄢˊ","兄":"ㄒㄩㄥ","先":"ㄒㄧㄢ","光":"ㄍㄨㄤ","克":"ㄎㄜˋ","兔":"ㄊㄨˋ","入":"ㄖㄨˋ","全":"ㄑㄩㄢˊ","八":"ㄅㄚ","公":"ㄍㄨㄥ","六":"ㄌㄧㄡˋ","其":"ㄑㄧˊ","具":"ㄐㄩˋ","再":"ㄗㄞˋ","冬":"ㄉㄨㄥ","冷":"ㄌㄥˇ","出":"ㄔㄨ","刀":"ㄉㄠ","分":"ㄈㄣ","切":"ㄑㄧㄝ","初":"ㄔㄨ","別":"ㄅㄧㄝˊ","利":"ㄌㄧˋ","到":"ㄉㄠˋ","制":"ㄓˋ","刷":"ㄕㄨㄚ","削":"ㄒㄧㄠ","前":"ㄑㄧㄢˊ","劃":"ㄏㄨㄚˋ","劉":"ㄌㄧㄡˊ","力":"ㄌㄧˋ","功":"ㄍㄨㄥ","加":"ㄐㄧㄚ","助":"ㄓㄨˋ","努":"ㄋㄨˇ","勇":"ㄩㄥˇ","動":"ㄉㄨㄥˋ","務":"ㄨˋ","勞":"ㄌㄠˊ","勤":"ㄑㄧㄣˊ","勺":"ㄕㄠˊ","包":"ㄅㄠ","化":"ㄏㄨㄚˋ","北":"ㄅㄟˇ","區":"ㄑㄩ","十":"ㄕˊ","千":"ㄑㄧㄢ","升":"ㄕㄥ","午":"ㄨˇ","半":"ㄅㄢˋ","南":"ㄋㄢˊ","卡":"ㄎㄚˇ","印":"ㄧㄣˋ","危":"ㄨㄟ","卻":"ㄑㄩㄝˋ","厚":"ㄏㄡˋ","去":"ㄑㄩˋ","又":"ㄧㄡˋ","叉":"ㄔㄚ","及":"ㄐㄧˊ","友":"ㄧㄡˇ","受":"ㄕㄡˋ","口":"ㄎㄡˇ","句":"ㄐㄩˋ","只":"ㄓˇ","叫":"ㄐㄧㄠˋ","可":"ㄎㄜˇ","台":"ㄊㄞˊ","史":"ㄕˇ","右":"ㄧㄡˋ","吃":"ㄔ","各":"ㄍㄜˋ","合":"ㄏㄜˊ","同":"ㄊㄨㄥˊ","名":"ㄇㄧㄥˊ","向":"ㄒㄧㄤˋ","吧":"ㄅㄚ˙","吳":"ㄨˊ","吵":"ㄔㄠˇ","吸":"ㄒㄧ","吹":"ㄔㄨㄟ","呀":"ㄧㄚ˙","告":"ㄍㄠˋ","呢":"ㄋㄜ˙","周":"ㄓㄡ","呼":"ㄏㄨ","和":"ㄏㄜˊ","品":"ㄆㄧㄣˇ","哇":"ㄨㄚ","哦":"ㄛˊ","哪":"ㄋㄚˇ","哭":"ㄎㄨ","唇":"ㄔㄨㄣˊ","唱":"ㄔㄤˋ","商":"ㄕㄤ","啊":"ㄚ˙","問":"ㄨㄣˋ","啦":"ㄌㄚ˙","喂":"ㄨㄟˋ","善":"ㄕㄢˋ","喊":"ㄏㄢˇ","喜":"ㄒㄧˇ","喝":"ㄏㄜ","單":"ㄉㄢ","嗎":"ㄇㄚ˙","嘴":"ㄗㄨㄟˇ","嘿":"ㄏㄟ","器":"ㄑㄧˋ","嚴":"ㄧㄢˊ","四":"ㄙˋ","回":"ㄏㄨㄟˊ","因":"ㄧㄣ","困":"ㄎㄨㄣˋ","國":"ㄍㄨㄛˊ","園":"ㄩㄢˊ","圓":"ㄩㄢˊ","圖":"ㄊㄨˊ","團":"ㄊㄨㄢˊ","土":"ㄊㄨˇ","在":"ㄗㄞˋ","地":"ㄉㄧˋ","坐":"ㄗㄨㄛˋ","城":"ㄔㄥˊ","堅":"ㄐㄧㄢ","場":"ㄔㄤˇ","塊":"ㄎㄨㄞˋ","塑":"ㄙㄨˋ","境":"ㄐㄧㄥˋ","增":"ㄗㄥ","壓":"ㄧㄚ","壞":"ㄏㄨㄞˋ","夏":"ㄒㄧㄚˋ","外":"ㄨㄞˋ","多":"ㄉㄨㄛ","夠":"ㄍㄡˋ","夢":"ㄇㄥˋ","大":"ㄉㄚˋ","天":"ㄊㄧㄢ","太":"ㄊㄞˋ","失":"ㄕ","套":"ㄊㄠˋ","奶":"ㄋㄞˇ","她":"ㄊㄚ","好":"ㄏㄠˇ","如":"ㄖㄨˊ","妹":"ㄇㄟˋ","始":"ㄕˇ","姐":"ㄐㄧㄝˇ","婆":"ㄆㄛˊ","媽":"ㄇㄚ","子":"ㄗ˙","字":"ㄗˋ","存":"ㄘㄨㄣˊ","孫":"ㄙㄨㄣ","學":"ㄒㄩㄝˊ","它":"ㄊㄚ","安":"ㄢ","完":"ㄨㄢˊ","定":"ㄉㄧㄥˋ","宜":"ㄧˊ","室":"ㄕˋ","宵":"ㄒㄧㄠ","家":"ㄐㄧㄚ","容":"ㄖㄨㄥˊ","察":"ㄔㄚˊ","實":"ㄕˊ","寫":"ㄒㄧㄝˇ","寬":"ㄎㄨㄢ","將":"ㄐㄧㄤ","尊":"ㄗㄨㄣ","對":"ㄉㄨㄟˋ","小":"ㄒㄧㄠˇ","少":"ㄕㄠˇ","就":"ㄐㄧㄡˋ","局":"ㄐㄩˊ","居":"ㄐㄩ","屋":"ㄨ","展":"ㄓㄢˇ","層":"ㄘㄥˊ","山":"ㄕㄢ","島":"ㄉㄠˇ","巢":"ㄔㄠˊ","工":"ㄍㄨㄥ","左":"ㄗㄨㄛˇ","已":"ㄧˇ","市":"ㄕˋ","布":"ㄅㄨˋ","希":"ㄒㄧ","師":"ㄕ","常":"ㄔㄤˊ","帽":"ㄇㄠˋ","幫":"ㄅㄤ","平":"ㄆㄧㄥˊ","年":"ㄋㄧㄢˊ","幾":"ㄐㄧˇ","床":"ㄔㄨㄤˊ","店":"ㄉㄧㄢˋ","府":"ㄈㄨˇ","度":"ㄉㄨˋ","康":"ㄎㄤ","廚":"ㄔㄨˊ","廳":"ㄊㄧㄥ","建":"ㄐㄧㄢˋ","式":"ㄕˋ","弟":"ㄉㄧˋ","張":"ㄓㄤ","彎":"ㄨㄢ","形":"ㄒㄧㄥˊ","影":"ㄧㄥˇ","往":"ㄨㄤˇ","很":"ㄏㄣˇ","律":"ㄌㄩˋ","後":"ㄏㄡˋ","徐":"ㄒㄩˊ","從":"ㄘㄨㄥˊ","德":"ㄉㄜˊ","心":"ㄒㄧㄣ","必":"ㄅㄧˋ","忘":"ㄨㄤˋ","忙":"ㄇㄤˊ","快":"ㄎㄨㄞˋ","念":"ㄋㄧㄢˋ","怕":"ㄆㄚˋ","思":"ㄙ","急":"ㄐㄧˊ","怯":"ㄑㄧㄝˋ","恩":"ㄣ","息":"ㄒㄧ","情":"ㄑㄧㄥˊ","惰":"ㄉㄨㄛˋ","想":"ㄒㄧㄤˇ","意":"ㄧˋ","愛":"ㄞˋ","感":"ㄍㄢˇ","慢":"ㄇㄢˋ","慶":"ㄑㄧㄥˋ","憶":"ㄧˋ","應":"ㄧㄥ","懶":"ㄌㄢˇ","懷":"ㄏㄨㄞˊ","成":"ㄔㄥˊ","我":"ㄨㄛˇ","或":"ㄏㄨㄛˋ","戰":"ㄓㄢˋ","房":"ㄈㄤˊ","所":"ㄙㄨㄛˇ","手":"ㄕㄡˇ","才":"ㄘㄞˊ","打":"ㄉㄚˇ","扔":"ㄖㄥ","找":"ㄓㄠˇ","技":"ㄐㄧˋ","把":"ㄅㄚˇ","抓":"ㄓㄨㄚ","投":"ㄊㄡˊ","折":"ㄓㄜˊ","抱":"ㄅㄠˋ","拉":"ㄌㄚ","拍":"ㄆㄞ","拒":"ㄐㄩˋ","拖":"ㄊㄨㄛ","拽":"ㄓㄨㄞˋ","拿":"ㄋㄚˊ","持":"ㄔˊ","指":"ㄓˇ","挑":"ㄊㄧㄠ","捉":"ㄓㄨㄛ","掃":"ㄙㄠˇ","掛":"ㄍㄨㄚˋ","接":"ㄐㄧㄝ","推":"ㄊㄨㄟ","提":"ㄊㄧˊ","換":"ㄏㄨㄢˋ","握":"ㄨㄛˋ","搖":"ㄧㄠˊ","搬":"ㄅㄢ","撞":"ㄓㄨㄤˋ","擇":"ㄗㄜˊ","擠":"ㄐㄧˇ","擦":"ㄘㄚ","收":"ㄕㄡ","改":"ㄍㄞˇ","放":"ㄈㄤˋ","政":"ㄓㄥˋ","救":"ㄐㄧㄡˋ","敗":"ㄅㄞˋ","教":"ㄐㄧㄠˋ","敢":"ㄍㄢˇ","散":"ㄙㄢˋ","整":"ㄓㄥˇ","數":"ㄕㄨˋ","文":"ㄨㄣˊ","料":"ㄌㄧㄠˋ","新":"ㄒㄧㄣ","方":"ㄈㄤ","於":"ㄩˊ","旅":"ㄌㄩˇ","日":"ㄖˋ","早":"ㄗㄠˇ","明":"ㄇㄧㄥˊ","易":"ㄧˋ","春":"ㄔㄨㄣ","昨":"ㄗㄨㄛˊ","是":"ㄕˋ","時":"ㄕˊ","晃":"ㄏㄨㄤˋ","晚":"ㄨㄢˇ","晨":"ㄔㄣˊ","暗":"ㄢˋ","更":"ㄍㄥˋ","書":"ㄕㄨ","曾":"ㄘㄥˊ","最":"ㄗㄨㄟˋ","會":"ㄏㄨㄟˋ","月":"ㄩㄝˋ","有":"ㄧㄡˇ","朋":"ㄆㄥˊ","服":"ㄈㄨˊ","望":"ㄨㄤˋ","木":"ㄇㄨˋ","本":"ㄅㄣˇ","李":"ㄌㄧˇ","材":"ㄘㄞˊ","村":"ㄘㄨㄣ","杜":"ㄉㄨˋ","束":"ㄕㄨˋ","杯":"ㄅㄟ","東":"ㄉㄨㄥ","林":"ㄌㄧㄣˊ","果":"ㄍㄨㄛˇ","染":"ㄖㄢˇ","柔":"ㄖㄡˊ","校":"ㄒㄧㄠˋ","格":"ㄍㄜˊ","桌":"ㄓㄨㄛ","條":"ㄊㄧㄠˊ","梯":"ㄊㄧ","棄":"ㄑㄧˋ","棉":"ㄇㄧㄢˊ","椅":"ㄧˇ","楊":"ㄧㄤˊ","業":"ㄧㄝˋ","極":"ㄐㄧˊ","樂":"ㄩㄝˋ","樓":"ㄌㄡˊ","標":"ㄅㄧㄠ","樹":"ㄕㄨˋ","橋":"ㄑㄧㄠˊ","橙":"ㄔㄥˊ","機":"ㄐㄧ","權":"ㄑㄩㄢˊ","次":"ㄘˋ","歌":"ㄍㄜ","歡":"ㄏㄨㄢ","正":"ㄓㄥˋ","步":"ㄅㄨˋ","歲":"ㄙㄨㄟˋ","歷":"ㄌㄧˋ","段":"ㄉㄨㄢˋ","母":"ㄇㄨˇ","每":"ㄇㄟˇ","比":"ㄅㄧˇ","毛":"ㄇㄠˊ","民":"ㄇㄧㄣˊ","氣":"ㄑㄧˋ","水":"ㄕㄨㄟˇ","江":"ㄐㄧㄤ","污":"ㄨ","決":"ㄐㄩㄝˊ","沈":"ㄔㄣˊ","沒":"ㄇㄟˊ","沙":"ㄕㄚ","河":"ㄏㄜˊ","治":"ㄓˋ","法":"ㄈㄚˇ","泥":"ㄋㄧˊ","注":"ㄓㄨˋ","洗":"ㄒㄧˇ","洲":"ㄓㄡ","浮":"ㄈㄨˊ","浴":"ㄩˋ","海":"ㄏㄞˇ","消":"ㄒㄧㄠ","深":"ㄕㄣ","淺":"ㄑㄧㄢˇ","清":"ㄑㄧㄥ","減":"ㄐㄧㄢˇ","測":"ㄘㄜˋ","港":"ㄍㄤˇ","湖":"ㄏㄨˊ","湯":"ㄊㄤ","準":"ㄓㄨㄣˇ","溝":"ㄍㄡ","溪":"ㄒㄧ","溫":"ㄨㄣ","溼":"ㄕ","滾":"ㄍㄨㄣˇ","灣":"ㄨㄢ","火":"ㄏㄨㄛˇ","炒":"ㄔㄠˇ","為":"ㄨㄟˋ","烤":"ㄎㄠˇ","然":"ㄖㄢˊ","照":"ㄓㄠˋ","煮":"ㄓㄨˇ","熱":"ㄖㄜˋ","燈":"ㄉㄥ","燒":"ㄕㄠ","燦":"ㄘㄢˋ","爛":"ㄌㄢˋ","父":"ㄈㄨˋ","爸":"ㄅㄚˋ","爺":"ㄧㄝˊ","片":"ㄆㄧㄢˋ","版":"ㄅㄢˇ","牙":"ㄧㄚˊ","牛":"ㄋㄧㄡˊ","物":"ㄨˋ","特":"ㄊㄜˋ","狗":"ㄍㄡˇ","猴":"ㄏㄡˊ","王":"ㄨㄤˊ","玩":"ㄨㄢˊ","玻":"ㄅㄛ","班":"ㄅㄢ","現":"ㄒㄧㄢˋ","球":"ㄑㄧㄡˊ","理":"ㄌㄧˇ","璃":"ㄌㄧˊ","環":"ㄏㄨㄢˊ","瓜":"ㄍㄨㄚ","瓶":"ㄆㄧㄥˊ","瓷":"ㄘˊ","甜":"ㄊㄧㄢˊ","生":"ㄕㄥ","用":"ㄩㄥˋ","田":"ㄊㄧㄢˊ","由":"ㄧㄡˊ","界":"ㄐㄧㄝˋ","留":"ㄌㄧㄡˊ","畫":"ㄏㄨㄚˋ","當":"ㄉㄤ","病":"ㄅㄧㄥˋ","痛":"ㄊㄨㄥˋ","瘦":"ㄕㄡˋ","發":"ㄈㄚ","白":"ㄅㄞˊ","百":"ㄅㄞˇ","的":"ㄉㄜ˙","皮":"ㄆㄧˊ","盤":"ㄆㄢˊ","目":"ㄇㄨˋ","直":"ㄓˊ","相":"ㄒㄧㄤˋ","省":"ㄕㄥˇ","看":"ㄎㄢˋ","真":"ㄓㄣ","眼":"ㄧㄢˇ","睛":"ㄐㄧㄥ","睡":"ㄕㄨㄟˋ","知":"ㄓ","短":"ㄉㄨㄢˇ","矮":"ㄞˇ","石":"ㄕˊ","研":"ㄧㄢˊ","破":"ㄆㄛˋ","硬":"ㄧㄥˋ","碗":"ㄨㄢˇ","社":"ㄕㄜˋ","祝":"ㄓㄨˋ","神":"ㄕㄣˊ","福":"ㄈㄨˊ","禮":"ㄌㄧˇ","秋":"ㄑㄧㄡ","科":"ㄎㄜ","移":"ㄧˊ","程":"ㄔㄥˊ","種":"ㄓㄨㄥˇ","積":"ㄐㄧ","究":"ㄐㄧㄡ","空":"ㄎㄨㄥ","穿":"ㄔㄨㄢ","突":"ㄊㄨ","窄":"ㄓㄞˇ","窗":"ㄔㄨㄤ","立":"ㄌㄧˋ","站":"ㄓㄢˋ","章":"ㄓㄤ","端":"ㄉㄨㄢ","竹":"ㄓㄨˊ","笑":"ㄒㄧㄠˋ","笨":"ㄅㄣˋ","第":"ㄉㄧˋ","筆":"ㄅㄧˇ","等":"ㄉㄥˇ","答":"ㄉㄚˊ","算":"ㄙㄨㄢˋ","管":"ㄍㄨㄢˇ","節":"ㄐㄧㄝˊ","篇":"ㄆㄧㄢ","築":"ㄓㄨˊ","簡":"ㄐㄧㄢˇ","米":"ㄇㄧˇ","粉":"ㄈㄣˇ","粗":"ㄘㄨ","精":"ㄐㄧㄥ","糖":"ㄊㄤˊ","約":"ㄩㄝ","紅":"ㄏㄨㄥˊ","紗":"ㄕㄚ","紙":"ㄓˇ","級":"ㄐㄧˊ","紫":"ㄗˇ","累":"ㄌㄟˋ","細":"ㄒㄧˋ","組":"ㄗㄨˇ","結":"ㄐㄧㄝˊ","絕":"ㄐㄩㄝˊ","給":"ㄍㄟˇ","絲":"ㄙ","經":"ㄐㄧㄥ","綠":"ㄌㄩˋ","網":"ㄨㄤˇ","線":"ㄒㄧㄢˋ","縣":"ㄒㄧㄢˋ","縮":"ㄙㄨㄛ","總":"ㄗㄨㄥˇ","績":"ㄐㄧ","織":"ㄓ","羅":"ㄌㄨㄛˊ","羊":"ㄧㄤˊ","美":"ㄇㄟˇ","群":"ㄑㄩㄣˊ","義":"ㄧˋ","翅":"ㄔˋ","翔":"ㄒㄧㄤˊ","翠":"ㄘㄨㄟˋ","翻":"ㄈㄢ","耀":"ㄧㄠˋ","老":"ㄌㄠˇ","考":"ㄎㄠˇ","而":"ㄦˊ","耐":"ㄋㄞˋ","耳":"ㄦˇ","聊":"ㄌㄧㄠˊ","聖":"ㄕㄥˋ","聚":"ㄐㄩˋ","聰":"ㄘㄨㄥ","聲":"ㄕㄥ","聽":"ㄊㄧㄥ","肉":"ㄖㄡˋ","肚":"ㄉㄨˋ","肩":"ㄐㄧㄢ","育":"ㄩˋ","背":"ㄅㄟˋ","胖":"ㄆㄤˋ","胡":"ㄏㄨˊ","能":"ㄋㄥˊ","腦":"ㄋㄠˇ","腰":"ㄧㄠ","腳":"ㄐㄧㄠˇ","腿":"ㄊㄨㄟˇ","膀":"ㄅㄤˇ","膠":"ㄐㄧㄠ","膽":"ㄉㄢˇ","臂":"ㄅㄧˋ","臉":"ㄌㄧㄢˇ","自":"ㄗˋ","臭":"ㄔㄡˋ","臺":"ㄊㄞˊ","與":"ㄩˇ","舊":"ㄐㄧㄡˋ","舞":"ㄨˇ","船":"ㄔㄨㄢˊ","良":"ㄌㄧㄤˊ","色":"ㄙㄜˋ","花":"ㄏㄨㄚ","苗":"ㄇㄧㄠˊ","苦":"ㄎㄨˇ","草":"ㄘㄠˇ","菜":"ㄘㄞˋ","萬":"ㄨㄢˋ","蒸":"ㄓㄥ","蓋":"ㄍㄞˋ","蔡":"ㄘㄞˋ","薄":"ㄅㄠˊ","藍":"ㄌㄢˊ","藝":"ㄧˋ","藥":"ㄧㄠˋ","虎":"ㄏㄨˇ","虔":"ㄑㄧㄢˊ","處":"ㄔㄨˇ","虛":"ㄒㄩ","號":"ㄏㄠˋ","蛇":"ㄕㄜˊ","蛋":"ㄉㄢˋ","蜂":"ㄈㄥ","蜜":"ㄇㄧˋ","蝴":"ㄏㄨˊ","蝶":"ㄉㄧㄝˊ","蟲":"ㄔㄨㄥˊ","術":"ㄕㄨˋ","街":"ㄐㄧㄝ","衛":"ㄨㄟˋ","衣":"ㄧ","表":"ㄅㄧㄠˇ","袋":"ㄉㄞˋ","被":"ㄅㄟˋ","裙":"ㄑㄩㄣˊ","裝":"ㄓㄨㄤ","製":"ㄓˋ","複":"ㄈㄨˋ","褲":"ㄎㄨˋ","襪":"ㄨㄚˋ","西":"ㄒㄧ","要":"ㄧㄠˋ","見":"ㄐㄧㄢˋ","規":"ㄍㄨㄟ","覺":"ㄐㄩㄝˊ","觀":"ㄍㄨㄢ","角":"ㄐㄧㄠˇ","解":"ㄐㄧㄝˇ","計":"ㄐㄧˋ","訊":"ㄒㄩㄣˋ","記":"ㄐㄧˋ","設":"ㄕㄜˋ","訴":"ㄙㄨˋ","詞":"ㄘˊ","試":"ㄕˋ","詩":"ㄕ","話":"ㄏㄨㄚˋ","該":"ㄍㄞ","認":"ㄖㄣˋ","誕":"ㄉㄢˋ","語":"ㄩˇ","誠":"ㄔㄥˊ","說":"ㄕㄨㄛ","誰":"ㄕㄨㄟˊ","課":"ㄎㄜˋ","調":"ㄊㄧㄠˊ","謙":"ㄑㄧㄢ","講":"ㄐㄧㄤˇ","謝":"ㄒㄧㄝˋ","警":"ㄐㄧㄥˇ","譯":"ㄧˋ","護":"ㄏㄨˋ","讀":"ㄉㄨˊ","變":"ㄅㄧㄢˋ","讓":"ㄖㄤˋ","豆":"ㄉㄡˋ","豔":"ㄧㄢˋ","象":"ㄒㄧㄤˋ","貓":"ㄇㄠ","負":"ㄈㄨˋ","責":"ㄗㄜˊ","貴":"ㄍㄨㄟˋ","買":"ㄇㄞˇ","貿":"ㄇㄠˋ","賀":"ㄏㄜˋ","資":"ㄗ","賣":"ㄇㄞˋ","質":"ㄓˋ","走":"ㄗㄡˇ","起":"ㄑㄧˇ","超":"ㄔㄠ","越":"ㄩㄝˋ","趕":"ㄍㄢˇ","趙":"ㄓㄠˋ","足":"ㄗㄨˊ","跑":"ㄆㄠˇ","跟":"ㄍㄣ","路":"ㄌㄨˋ","跳":"ㄊㄧㄠˋ","身":"ㄕㄣ","車":"ㄔㄜ","軍":"ㄐㄩㄣ","軟":"ㄖㄨㄢˇ","較":"ㄐㄧㄠˋ","輕":"ㄑㄧㄥ","輸":"ㄕㄨ","轉":"ㄓㄨㄢˇ","辣":"ㄌㄚˋ","辦":"ㄅㄢˋ","農":"ㄋㄨㄥˊ","近":"ㄐㄧㄣˋ","追":"ㄓㄨㄟ","退":"ㄊㄨㄟˋ","送":"ㄙㄨㄥˋ","逃":"ㄊㄠˊ","這":"ㄓㄜˋ","通":"ㄊㄨㄥ","造":"ㄗㄠˋ","連":"ㄌㄧㄢˊ","進":"ㄐㄧㄣˋ","遊":"ㄧㄡˊ","運":"ㄩㄣˋ","過":"ㄍㄨㄛˋ","道":"ㄉㄠˋ","達":"ㄉㄚˊ","遞":"ㄉㄧˋ","遠":"ㄩㄢˇ","選":"ㄒㄩㄢˇ","還":"ㄏㄞˊ","那":"ㄋㄚˋ","部":"ㄅㄨˋ","郭":"ㄍㄨㄛ","都":"ㄉㄨ","鄉":"ㄒㄧㄤ","鄭":"ㄓㄥˋ","鄰":"ㄌㄧㄣˊ","酸":"ㄙㄨㄢ","醒":"ㄒㄧㄥˇ","醜":"ㄔㄡˇ","醫":"ㄧ","釋":"ㄕˋ","重":"ㄓㄨㄥˋ","量":"ㄌㄧㄤˋ","金":"ㄐㄧㄣ","銀":"ㄧㄣˊ","銅":"ㄊㄨㄥˊ","鋁":"ㄌㄩˇ","錢":"ㄑㄧㄢˊ","鎮":"ㄓㄣˋ","鐵":"ㄊㄧㄝˇ","長":"ㄓㄤˇ","門":"ㄇㄣˊ","開":"ㄎㄞ","閒":"ㄒㄧㄢˊ","間":"ㄐㄧㄢ","關":"ㄍㄨㄢ","防":"ㄈㄤˊ","降":"ㄐㄧㄤˋ","院":"ㄩㄢˋ","除":"ㄔㄨˊ","陳":"ㄔㄣˊ","陶":"ㄊㄠˊ","陸":"ㄌㄨˋ","陽":"ㄧㄤˊ","隊":"ㄉㄨㄟˋ","際":"ㄐㄧˋ","險":"ㄒㄧㄢˇ","隻":"ㄓ","集":"ㄐㄧˊ","雙":"ㄕㄨㄤ","雜":"ㄗㄚˊ","離":"ㄌㄧˊ","難":"ㄋㄢˊ","雨":"ㄩˇ","雪":"ㄒㄩㄝˇ","雲":"ㄩㄣˊ","零":"ㄌㄧㄥˊ","雷":"ㄌㄟˊ","電":"ㄉㄧㄢˋ","需":"ㄒㄩ","青":"ㄑㄧㄥ","靜":"ㄐㄧㄥˋ","非":"ㄈㄟ","面":"ㄇㄧㄢˋ","鞋":"ㄒㄧㄝˊ","音":"ㄧㄣ","響":"ㄒㄧㄤˇ","須":"ㄒㄩ","頭":"ㄊㄡ˙","頸":"ㄐㄧㄥˇ","題":"ㄊㄧˊ","類":"ㄌㄟˋ","風":"ㄈㄥ","飛":"ㄈㄟ","飯":"ㄈㄢˋ","餅":"ㄅㄧㄥˇ","館":"ㄍㄨㄢˇ","首":"ㄕㄡˇ","香":"ㄒㄧㄤ","馬":"ㄇㄚˇ","驕":"ㄐㄧㄠ","驗":"ㄧㄢˋ","髒":"ㄗㄤ","體":"ㄊㄧˇ","高":"ㄍㄠ","髮":"ㄈㄚˇ","鬧":"ㄋㄠˋ","魚":"ㄩˊ","鮮":"ㄒㄧㄢ","鳥":"ㄋㄧㄠˇ","鴨":"ㄧㄚ","鵑":"ㄐㄩㄢ","鷄":"ㄐㄧ","鹹":"ㄒㄧㄢˊ","鹿":"ㄌㄨˋ","麗":"ㄌㄧˋ","麥":"ㄇㄞˋ","麵":"ㄇㄧㄢˋ","麼":"ㄇㄜ˙","黃":"ㄏㄨㄤˊ","黑":"ㄏㄟ","點":"ㄉㄧㄢˇ","鼠":"ㄕㄨˇ","鼻":"ㄅㄧˊ","齒":"ㄔˇ","龍":"ㄌㄨㄥˊ"};
+
+// ========== STORAGE ==========
+const KEYS = {
+  lessons: 'zhcn_lessons',
+  records: 'zhcn_records',
+  points: 'zhcn_points',
+  rewards: 'zhcn_rewards',
+};
+
+function load(key, fallback) {
+  try { const d = localStorage.getItem(key); return d ? JSON.parse(d) : fallback; }
+  catch { return fallback; }
+}
+function save(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
+
+function getLessons() { return load(KEYS.lessons, []); }
+function saveLessons(l) { save(KEYS.lessons, l); }
+function getRecords() { return load(KEYS.records, {}); }
+function saveRecords(r) { save(KEYS.records, r); }
+function getPoints() { return load(KEYS.points, 0); }
+function savePoints(p) { save(KEYS.points, p); }
+function getRewards() { return load(KEYS.rewards, []); }
+function saveRewards(r) { save(KEYS.rewards, r); }
+
+// ========== TTS ==========
+function speak(text, onEnd) {
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-TW';
+  u.rate = 0.8;
+  if (onEnd) u.onend = onEnd;
+  speechSynthesis.speak(u);
+}
+
+// ========== PINYIN TO ZHUYIN ==========
+function pinyinToZhuyin(pinyinStr) {
+  // Split pinyin string into syllables (space-separated or continuous with tone marks)
+  const syllables = pinyinStr.trim().toLowerCase().split(/\s+/);
+  return syllables.map(s => syllableToZhuyin(s)).join(' ');
+}
+
+function syllableToZhuyin(s) {
+  if (!s) return '';
+  // Extract tone from accent marks
+  const accentMap = {
+    'ā':['a',1],'á':['a',2],'ǎ':['a',3],'à':['a',4],
+    'ō':['o',1],'ó':['o',2],'ǒ':['o',3],'ò':['o',4],
+    'ē':['e',1],'é':['e',2],'ě':['e',3],'è':['e',4],
+    'ī':['i',1],'í':['i',2],'ǐ':['i',3],'ì':['i',4],
+    'ū':['u',1],'ú':['u',2],'ǔ':['u',3],'ù':['u',4],
+    'ǖ':['ü',1],'ǘ':['ü',2],'ǚ':['ü',3],'ǜ':['ü',4],
+  };
+  const toneSymbols = { 1: '', 2: 'ˊ', 3: 'ˇ', 4: 'ˋ', 5: '˙' };
+  let tone = 5; // default neutral
+  let base = s;
+  // Check tone number at end
+  if (/[1-5]$/.test(base)) {
+    tone = parseInt(base.slice(-1));
+    base = base.slice(0, -1);
+  } else {
+    // Check accent marks
+    for (const [mark, [repl, t]] of Object.entries(accentMap)) {
+      if (base.includes(mark)) {
+        base = base.replace(mark, repl);
+        tone = t;
+        break;
+      }
+    }
+  }
+  base = base.replace(/v/g, 'ü');
+
+  // Whole syllable mappings (y/w initials, standalone vowels, zhi/chi/shi/ri/zi/ci/si)
+  const wholeMap = {
+    'zhi':'ㄓ','chi':'ㄔ','shi':'ㄕ','ri':'ㄖ',
+    'zi':'ㄗ','ci':'ㄘ','si':'ㄙ',
+    'yi':'ㄧ','ya':'ㄧㄚ','ye':'ㄧㄝ','yao':'ㄧㄠ','you':'ㄧㄡ',
+    'yan':'ㄧㄢ','yin':'ㄧㄣ','yang':'ㄧㄤ','ying':'ㄧㄥ','yong':'ㄩㄥ',
+    'yu':'ㄩ','yue':'ㄩㄝ','yuan':'ㄩㄢ','yun':'ㄩㄣ',
+    'wu':'ㄨ','wa':'ㄨㄚ','wo':'ㄨㄛ','wai':'ㄨㄞ','wei':'ㄨㄟ',
+    'wan':'ㄨㄢ','wen':'ㄨㄣ','wang':'ㄨㄤ','weng':'ㄨㄥ',
+    'a':'ㄚ','o':'ㄛ','e':'ㄜ','ai':'ㄞ','ei':'ㄟ',
+    'ao':'ㄠ','ou':'ㄡ','an':'ㄢ','en':'ㄣ','ang':'ㄤ','eng':'ㄥ','er':'ㄦ',
+  };
+  if (wholeMap[base]) return wholeMap[base] + toneSymbols[tone];
+
+  // Parse initial + final
+  const initials = ['zh','ch','sh','b','p','m','f','d','t','n','l','g','k','h','j','q','x','r','z','c','s'];
+  const initialZhuyin = {
+    'b':'ㄅ','p':'ㄆ','m':'ㄇ','f':'ㄈ','d':'ㄉ','t':'ㄊ','n':'ㄋ','l':'ㄌ',
+    'g':'ㄍ','k':'ㄎ','h':'ㄏ','j':'ㄐ','q':'ㄑ','x':'ㄒ',
+    'zh':'ㄓ','ch':'ㄔ','sh':'ㄕ','r':'ㄖ','z':'ㄗ','c':'ㄘ','s':'ㄙ',
+  };
+  let ini = '', fin = base;
+  for (const i of initials) {
+    if (base.startsWith(i)) { ini = i; fin = base.slice(i.length); break; }
+  }
+  // j/q/x + u → ü in zhuyin
+  if (['j','q','x'].includes(ini) && fin.startsWith('u')) {
+    fin = 'ü' + fin.slice(1);
+  }
+  const finalZhuyin = {
+    'a':'ㄚ','o':'ㄛ','e':'ㄜ','i':'ㄧ','u':'ㄨ','ü':'ㄩ',
+    'ai':'ㄞ','ei':'ㄟ','ao':'ㄠ','ou':'ㄡ',
+    'an':'ㄢ','en':'ㄣ','ang':'ㄤ','eng':'ㄥ','ong':'ㄨㄥ','er':'ㄦ',
+    'ia':'ㄧㄚ','ie':'ㄧㄝ','iao':'ㄧㄠ','iu':'ㄧㄡ','iou':'ㄧㄡ',
+    'ian':'ㄧㄢ','in':'ㄧㄣ','iang':'ㄧㄤ','ing':'ㄧㄥ','iong':'ㄩㄥ',
+    'ua':'ㄨㄚ','uo':'ㄨㄛ','uai':'ㄨㄞ','ui':'ㄨㄟ','uei':'ㄨㄟ',
+    'uan':'ㄨㄢ','un':'ㄨㄣ','uen':'ㄨㄣ','uang':'ㄨㄤ',
+    'üe':'ㄩㄝ','üan':'ㄩㄢ','ün':'ㄩㄣ',
+  };
+  return (initialZhuyin[ini] || '') + (finalZhuyin[fin] || fin) + toneSymbols[tone];
+}
+
+function autoGenerateZhuyin(text) {
+  if (!text) return '';
+  try {
+    const chars = text.split('');
+    const zhuyinParts = chars.map(ch => {
+      if (!/[\u4e00-\u9fff]/.test(ch)) return ch; // non-Chinese char
+      // Primary: use embedded ZHUYIN_DICT (offline, reliable)
+      if (ZHUYIN_DICT && ZHUYIN_DICT[ch]) return ZHUYIN_DICT[ch];
+      // Fallback: use cnchar CDN if loaded
+      if (window.cnchar) {
+        const py = cnchar.spell(ch, 'tone', 'array');
+        if (py && py.length > 0) return syllableToZhuyin(py[0]);
+      }
+      return ch;
+    });
+    return zhuyinParts.join(' ').trim();
+  } catch { return ''; }
+}
+
+// ========== NAV STATE ==========
+let currentView = 'home';
+let viewParams = {};
+const history_stack = [];
+
+function navigate(view, params = {}) {
+  history_stack.push({ view: currentView, params: { ...viewParams } });
+  currentView = view;
+  viewParams = params;
+  render();
+  window.scrollTo(0, 0);
+}
+
+function goBack() {
+  if (history_stack.length > 0) {
+    const prev = history_stack.pop();
+    currentView = prev.view;
+    viewParams = prev.params;
+    render();
+  } else {
+    currentView = 'home';
+    viewParams = {};
+    render();
+  }
+}
+
+// ========== RENDER ENGINE ==========
+function render() {
+  const app = document.getElementById('app');
+  switch (currentView) {
+    case 'home': app.innerHTML = renderHome(); break;
+    case 'lessonDetail': app.innerHTML = renderLessonDetail(); break;
+    case 'addWord': app.innerHTML = renderAddWord(); break;
+    case 'editLesson': app.innerHTML = renderEditLesson(); break;
+    case 'ocrImport': app.innerHTML = renderOcrImport(); break;
+    case 'originalText': app.innerHTML = renderOriginalText(); break;
+    case 'reviewSetup': app.innerHTML = renderReviewSetup(); break;
+    case 'review': app.innerHTML = renderReview(); autoPlayReview(); break;
+    case 'testSetup': app.innerHTML = renderTestSetup(); break;
+    case 'test': renderTest(app); return;
+    case 'evaluate': app.innerHTML = renderEvaluate(); break;
+    case 'result': app.innerHTML = renderResult(); break;
+    case 'records': app.innerHTML = renderRecords(); break;
+    case 'recordDetail': app.innerHTML = renderRecordDetail(); break;
+    case 'rewards': app.innerHTML = renderRewards(); break;
+    case 'addReward': app.innerHTML = renderAddReward(); break;
+    case 'settings': app.innerHTML = renderSettings(); break;
+    default: app.innerHTML = renderHome();
+  }
+  bindEvents();
+}
+
+function bindEvents() {
+  // Bind delegated events after render
+  document.querySelectorAll('[data-action]').forEach(el => {
+    const action = el.dataset.action;
+    const handler = handlers[action];
+    if (handler) {
+      el.onclick = (e) => handler(e, el);
+    }
+  });
+  // Auto-generate zhuyin when typing characters (supports multi-line)
+  const wordInput = document.getElementById('wordText');
+  if (wordInput) {
+    wordInput.addEventListener('input', () => {
+      const raw = wordInput.value;
+      if (!raw.trim()) return;
+      const lines = raw.split('\n');
+      const zhuyinLines = lines.map(line => {
+        const t = line.trim();
+        return t ? autoGenerateZhuyin(t) : '';
+      });
+      document.getElementById('wordZhuyin').value = zhuyinLines.join('\n');
+    });
+  }
+}
+
+// ========== HEADER COMPONENT ==========
+function headerHTML(title, showBack = true, actionsHTML = '') {
+  return `<div class="header">
+    ${showBack ? '<button class="back-btn" data-action="goBack">←</button>' : ''}
+    <h1>${title}</h1>
+    <div class="header-actions">${actionsHTML}</div>
+  </div>`;
+}
+
+// ========== VIEWS ==========
+
+// --- HOME ---
+function renderHome() {
+  const lessons = getLessons();
+  const points = getPoints();
+  return `
+    ${headerHTML('📘 國小國文練習', false)}
+    <div class="points-bar">⭐ 點數：${points}</div>
+    <div class="home-grid">
+      <div class="home-card" data-action="goLessons" style="grid-column:span 2;">
+        <div class="icon">📚</div>
+        <div class="label">課程管理（${lessons.length} 課）</div>
+      </div>
+      <div class="home-card" data-action="goReviewSetup">
+        <div class="icon">🟢</div>
+        <div class="label">複習模式</div>
+      </div>
+      <div class="home-card" data-action="goTestSetup">
+        <div class="icon">🔵</div>
+        <div class="label">考試模式</div>
+      </div>
+      <div class="home-card" data-action="goRecords">
+        <div class="icon">📊</div>
+        <div class="label">學習紀錄</div>
+      </div>
+      <div class="home-card" data-action="goRewards">
+        <div class="icon">🎁</div>
+        <div class="label">獎勵商店</div>
+      </div>
+      <div class="home-card wide" data-action="goSettings" style="background:linear-gradient(135deg,#f5f5f5,#e8e8e8);color:#666;">
+        <div class="icon">⚙️</div>
+        <div class="label">系統設定</div>
+      </div>
+    </div>
+    ${lessons.length > 0 ? `
+    <div class="list-container">
+      ${lessons.map((l, i) => `
+        <div class="list-item" data-action="openLesson" data-id="${l.id}">
+          <div class="item-text">
+            <h3>${l.name}</h3>
+            <p>${l.words.length} 個字詞</p>
+          </div>
+          <span class="arrow">›</span>
+        </div>
+      `).join('')}
+    </div>` : ''}
+    <button class="fab" data-action="addLesson">＋</button>
+  `;
+}
+
+// --- LESSON DETAIL ---
+function renderLessonDetail() {
+  const lessons = getLessons();
+  const lesson = lessons.find(l => l.id === viewParams.lessonId);
+  if (!lesson) return headerHTML('找不到課程') + '<div class="empty-state"><p>課程不存在</p></div>';
+
+  return `
+    ${headerHTML(lesson.name, true, `
+      <button class="btn btn-sm btn-outline" data-action="editLessonName">✏️</button>
+      <button class="btn btn-sm btn-danger" data-action="deleteLesson" data-id="${lesson.id}">🗑</button>
+    `)}
+    <div style="padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="btn btn-sm btn-primary" data-action="goAddWord">＋ 新增字詞</button>
+      <button class="btn btn-sm btn-accent" data-action="goOcr">📷 圖片匯入</button>
+      ${lesson.originalImage ? `<button class="btn btn-sm btn-outline" data-action="viewOriginalText">📄 原始課文</button>` : `<button class="btn btn-sm btn-outline" data-action="uploadOriginalText">📄 上傳課文</button>`}
+    </div>
+    ${lesson.words.length === 0 ? `
+      <div class="empty-state fade-in">
+        <div class="icon">📝</div>
+        <p>尚未新增字詞，<br>點擊「＋ 新增字詞」開始建立！</p>
+      </div>
+    ` : `
+      <div class="list-container">
+        ${lesson.words.map(w => `
+          <div class="list-item" data-action="previewWord" data-text="${w.text}" data-zhuyin="${w.zhuyin}">
+            <div class="item-text">
+              <h3>${w.text} <span style="font-size:16px;color:var(--primary);margin-left:8px;">${w.zhuyin}</span></h3>
+            </div>
+            <button class="word-delete" data-action="deleteWord" data-id="${w.id}" data-lesson="${lesson.id}">✕</button>
+          </div>
+        `).join('')}
+      </div>
+    `}
+    <input type="file" id="originalTextInput" accept="image/*" class="hidden" />
+  `;
+}
+
+// --- ADD WORD ---
+function renderAddWord() {
+  return `
+    ${headerHTML('新增字詞')}
+    <div class="card fade-in">
+      <div class="form-group">
+        <label>字／詞 <span style="font-size:13px;color:var(--text-light);">（可輸入多行，每行自動拆分為一筆）</span></label>
+        <textarea class="form-input" id="wordText" placeholder="例：&#10;學校&#10;今天&#10;明天" rows="3" autofocus style="resize:vertical;"></textarea>
+      </div>
+      <div class="form-group">
+        <label>注音 <span style="font-size:13px;color:var(--text-light);">（自動產生，可手動修改；多行以換行對應）</span></label>
+        <textarea class="form-input" id="wordZhuyin" placeholder="例：&#10;ㄒㄩㄝˊ ㄒㄧㄠˋ&#10;ㄐㄧㄣ ㄊㄧㄢ&#10;ㄇㄧㄥˊ ㄊㄧㄢ" rows="3" style="resize:vertical;"></textarea>
+      </div>
+      <button class="btn btn-primary btn-block mt-12" data-action="saveWord">新增</button>
+      <button class="btn btn-outline btn-block mt-12" data-action="saveAndContinue">新增並繼續</button>
+    </div>
+  `;
+}
+
+// --- EDIT LESSON NAME ---
+function renderEditLesson() {
+  const lessons = getLessons();
+  const lesson = lessons.find(l => l.id === viewParams.lessonId);
+  return `
+    ${headerHTML('編輯課程名稱')}
+    <div class="card fade-in">
+      <div class="form-group">
+        <label>課程名稱</label>
+        <input class="form-input" id="lessonNameInput" value="${lesson ? lesson.name : ''}" />
+      </div>
+      <button class="btn btn-primary btn-block mt-12" data-action="saveLessonName">儲存</button>
+    </div>
+  `;
+}
+
+// --- OCR IMPORT ---
+function renderOcrImport() {
+  return `
+    ${headerHTML('圖片掃描匯入')}
+    <div class="card fade-in">
+      <p style="margin-bottom:12px;color:var(--text-light);">上傳課本圖片，系統將自動辨識文字。</p>
+      <input type="file" id="ocrFileInput" accept="image/*" class="form-input" />
+      <div id="ocrPreview" style="margin-top:12px;"></div>
+      <div id="ocrResult" style="margin-top:16px;"></div>
+    </div>
+  `;
+}
+
+// --- ORIGINAL TEXT ---
+function renderOriginalText() {
+  const lessons = getLessons();
+  const lesson = lessons.find(l => l.id === viewParams.lessonId);
+  if (!lesson || !lesson.originalImage) return headerHTML('原始課文') + '<div class="empty-state"><p>尚未上傳課文圖片</p></div>';
+  return `
+    ${headerHTML(lesson.name + ' - 原始課文')}
+    <div class="p-16 fade-in">
+      <img src="${lesson.originalImage}" class="img-viewer" alt="原始課文" />
+    </div>
+  `;
+}
+
+// --- REVIEW SETUP ---
+function renderReviewSetup() {
+  const lessons = getLessons();
+  if (lessons.length === 0) return headerHTML('複習模式') + '<div class="empty-state"><div class="icon">📚</div><p>尚無課程，請先新增課程。</p></div>';
+
+  return `
+    ${headerHTML('複習模式')}
+    <div class="card fade-in">
+      <h3 style="margin-bottom:12px;">選擇課程</h3>
+      <div class="list-container" style="margin:0;box-shadow:none;">
+        ${lessons.map(l => `
+          <div class="check-item ${viewParams.selectedLessons && viewParams.selectedLessons.includes(l.id) ? 'checked' : ''}" data-action="toggleLessonCheck" data-id="${l.id}">
+            <div class="check-box">${viewParams.selectedLessons && viewParams.selectedLessons.includes(l.id) ? '✓' : ''}</div>
+            <span class="check-label">${l.name}（${l.words.length} 字）</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:12px;">練習範圍</h3>
+      <div class="flex gap-12 flex-wrap">
+        <button class="btn ${viewParams.reviewFilter !== 'wrong' ? 'btn-primary' : 'btn-outline'}" data-action="setReviewFilter" data-filter="all">全部練習</button>
+        <button class="btn ${viewParams.reviewFilter === 'wrong' ? 'btn-primary' : 'btn-outline'}" data-action="setReviewFilter" data-filter="wrong">錯字練習</button>
+      </div>
+    </div>
+    <div class="p-16">
+      <button class="btn btn-accent btn-lg btn-block" data-action="startReview">開始複習</button>
+    </div>
+  `;
+}
+
+// --- REVIEW ---
+function renderReview() {
+  const words = viewParams.reviewWords || [];
+  const idx = viewParams.reviewIndex || 0;
+  if (words.length === 0) return headerHTML('複習模式') + '<div class="empty-state"><p>沒有符合條件的字詞</p></div>';
+  const word = words[idx];
+
+  return `
+    ${headerHTML(`複習 (${idx + 1}/${words.length})`)}
+    <div class="card review-card fade-in">
+      <div class="review-zhuyin">${word.zhuyin}</div>
+      <div class="review-char pop-in">${word.text}</div>
+      <div class="review-stroke-container" id="strokeTarget"></div>
+      <div class="flex-center gap-12 mt-16">
+        <button class="btn btn-icon btn-primary" data-action="speakWord" data-text="${word.text}" title="發音">🔊</button>
+        <button class="btn btn-icon btn-accent" data-action="showStroke" data-text="${word.text}" title="筆順">✍️</button>
+      </div>
+    </div>
+    <div class="flex-center gap-12 mt-16" style="padding:0 16px;">
+      <button class="btn btn-outline" data-action="reviewPrev" ${idx === 0 ? 'disabled style="opacity:0.4"' : ''}>← 上一個</button>
+      <button class="btn btn-primary" data-action="reviewNext">${idx === words.length - 1 ? '完成' : '下一個 →'}</button>
+    </div>
+  `;
+}
+
+// Auto-play pronunciation + stroke order when entering review mode
+function autoPlayReview() {
+  const words = viewParams.reviewWords || [];
+  const idx = viewParams.reviewIndex || 0;
+  if (words.length === 0) return;
+  const word = words[idx];
+  // Small delay to ensure DOM is ready
+  setTimeout(() => {
+    // Auto-play pronunciation
+    speak(word.text);
+    // Auto-play stroke order animation
+    const target = document.getElementById('strokeTarget');
+    if (!target) return;
+    target.innerHTML = '';
+    const chars = word.text.split('');
+    const divs = chars.map(ch => {
+      const div = document.createElement('div');
+      div.style.display = 'inline-block';
+      div.style.margin = '4px';
+      target.appendChild(div);
+      return { div, ch };
+    });
+    async function animateSequentially() {
+      for (const { div, ch } of divs) {
+        if (!/[\u4e00-\u9fff]/.test(ch)) {
+          div.innerHTML = `<span style="font-size:60px">${ch}</span>`;
+          continue;
+        }
+        try {
+          const writer = HanziWriter.create(div, ch, {
+            width: 120, height: 120,
+            padding: 5,
+            showOutline: true,
+            strokeAnimationSpeed: 1,
+            delayBetweenStrokes: 300,
+          });
+          await new Promise(resolve => {
+            writer.animateCharacter({ onComplete: resolve });
+          });
+        } catch (err) {
+          div.innerHTML = `<span style="font-size:60px">${ch}</span>`;
+        }
+      }
+    }
+    animateSequentially();
+  }, 300);
+}
+
+// --- TEST SETUP ---
+function renderTestSetup() {
+  const lessons = getLessons();
+  if (lessons.length === 0) return headerHTML('考試模式') + '<div class="empty-state"><div class="icon">📝</div><p>尚無課程，請先新增課程。</p></div>';
+
+  return `
+    ${headerHTML('考試模式')}
+    <div class="card fade-in">
+      <h3 style="margin-bottom:12px;">選擇考試範圍</h3>
+      <div class="list-container" style="margin:0;box-shadow:none;">
+        ${lessons.map(l => `
+          <div class="check-item ${viewParams.selectedLessons && viewParams.selectedLessons.includes(l.id) ? 'checked' : ''}" data-action="toggleTestLessonCheck" data-id="${l.id}">
+            <div class="check-box">${viewParams.selectedLessons && viewParams.selectedLessons.includes(l.id) ? '✓' : ''}</div>
+            <span class="check-label">${l.name}（${l.words.length} 字）</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <div class="p-16">
+      <button class="btn btn-accent btn-lg btn-block" data-action="startTest">開始考試</button>
+    </div>
+  `;
+}
+
+// --- TEST (special render - needs canvas) ---
+function renderTest(app) {
+  const words = viewParams.testWords || [];
+  const idx = viewParams.testIndex || 0;
+  const word = words[idx];
+  const showAnswer = viewParams.showAnswer || false;
+  const isLast = idx === words.length - 1;
+
+  app.innerHTML = `
+    ${headerHTML(`考試 (${idx + 1}/${words.length})`)}
+    <div class="test-container fade-in">
+      <div class="test-prompt">
+        <div class="test-progress">第 ${idx + 1} 題，共 ${words.length} 題</div>
+        <div class="test-zhuyin">${word.zhuyin}</div>
+        ${showAnswer ? `<div class="test-answer pop-in">${word.text}</div>` : '<div class="test-answer"></div>'}
+      </div>
+      <div class="test-canvas-wrapper">
+        <div class="canvas-area" style="width:100%;aspect-ratio:1;position:relative;">
+          <canvas id="testCanvas"></canvas>
+        </div>
+      </div>
+      <div class="test-actions">
+        <button class="btn btn-icon btn-primary" data-action="speakWord" data-text="${word.text}">🔊</button>
+        <button class="btn btn-icon btn-accent" data-action="toggleAnswer">👁</button>
+        <button class="btn btn-sm btn-outline" data-action="clearCanvas">清除</button>
+        <button class="btn btn-success btn-lg" data-action="testNext">${isLast ? '✅ 完成' : '完成 →'}</button>
+      </div>
+    </div>
+  `;
+
+  bindEvents();
+  initCanvas();
+}
+
+// --- EVALUATE ---
+function renderEvaluate() {
+  const words = viewParams.testWords || [];
+  const canvasImages = viewParams.canvasImages || [];
+  const grades = viewParams.grades || {};
+
+  return `
+    ${headerHTML('📝 請爸爸媽媽評分')}
+    <div class="p-16 text-center fade-in" style="color:var(--primary);font-size:20px;font-weight:600;">
+      請點擊每一題的「正確」或「錯誤」
+    </div>
+    ${words.map((w, i) => `
+      <div class="eval-item fade-in" style="animation-delay:${i * 0.05}s">
+        <img src="${canvasImages[i] || ''}" alt="手寫" />
+        <div class="eval-info">
+          <div class="char">${w.text}</div>
+          <div class="zhuyin">${w.zhuyin}</div>
+        </div>
+        ${grades[i] !== undefined ? `
+          <div class="eval-marked ${grades[i] ? 'eval-correct' : 'eval-wrong'}">${grades[i] ? '✓' : '✗'}</div>
+        ` : `
+          <div class="eval-btns">
+            <button class="btn btn-sm btn-success" data-action="gradeCorrect" data-idx="${i}">正確</button>
+            <button class="btn btn-sm btn-danger" data-action="gradeWrong" data-idx="${i}">錯誤</button>
+          </div>
+        `}
+      </div>
+    `).join('')}
+    ${Object.keys(grades).length === words.length ? `
+      <div class="p-16">
+        <button class="btn btn-accent btn-lg btn-block pop-in" data-action="showResult">查看成績</button>
+      </div>
+    ` : ''}
+  `;
+}
+
+// --- RESULT ---
+function renderResult() {
+  const correct = viewParams.correctCount || 0;
+  const total = viewParams.totalCount || 1;
+  const score = Math.round((correct / total) * 100);
+  let feedback, cssClass, emoji;
+  if (score >= 90) { feedback = '你好棒！'; cssClass = 'score-great'; emoji = '🌟'; }
+  else if (score >= 60) { feedback = '請加油！'; cssClass = 'score-ok'; emoji = '💪'; }
+  else { feedback = '請再考一次'; cssClass = 'score-low'; emoji = '📖'; }
+
+  return `
+    ${headerHTML('考試成績')}
+    <div class="score-display fade-in">
+      <div style="font-size:64px;" class="pop-in">${emoji}</div>
+      <div class="score-number ${cssClass} pop-in">${score}</div>
+      <div style="font-size:24px;font-weight:700;margin-bottom:8px;">${feedback}</div>
+      <div style="color:var(--text-light);">答對 ${correct} 題 / 共 ${total} 題</div>
+      ${score === 100 ? '<div class="badge mt-12 pop-in" style="font-size:18px;padding:8px 20px;">🎉 獲得 1 點獎勵點數！</div>' : ''}
+    </div>
+    <div class="p-16 flex flex-col gap-12">
+      <button class="btn btn-primary btn-block" data-action="goHome">回首頁</button>
+      <button class="btn btn-outline btn-block" data-action="retakeTest">再考一次</button>
+    </div>
+  `;
+}
+
+// --- RECORDS ---
+function renderRecords() {
+  const records = getRecords();
+  const entries = Object.entries(records);
+  if (entries.length === 0) return headerHTML('學習紀錄') + '<div class="empty-state fade-in"><div class="icon">📊</div><p>尚無學習紀錄</p></div>';
+
+  entries.sort((a, b) => (b[1].wrong || 0) - (a[1].wrong || 0));
+
+  return `
+    ${headerHTML('學習紀錄')}
+    <div class="list-container fade-in">
+      ${entries.map(([text, rec]) => {
+        const total = (rec.correct || 0) + (rec.wrong || 0);
+        const correctPct = total > 0 ? ((rec.correct || 0) / total * 100) : 0;
+        const wrongPct = total > 0 ? ((rec.wrong || 0) / total * 100) : 0;
+        return `
+          <div class="list-item" data-action="openRecordDetail" data-text="${text}">
+            <div style="font-size:28px;font-weight:700;width:50px;text-align:center;">${text}</div>
+            <div class="item-text">
+              <div class="record-bar">
+                <span style="font-size:13px;color:var(--success);width:40px;">✓ ${rec.correct || 0}</span>
+                <div class="bar bar-correct" style="width:${Math.max(correctPct, 2)}%;"></div>
+              </div>
+              <div class="record-bar">
+                <span style="font-size:13px;color:var(--danger);width:40px;">✗ ${rec.wrong || 0}</span>
+                <div class="bar bar-wrong" style="width:${Math.max(wrongPct, 2)}%;"></div>
+              </div>
+            </div>
+            <span class="arrow">›</span>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+// --- RECORD DETAIL ---
+function renderRecordDetail() {
+  const records = getRecords();
+  const text = viewParams.wordText;
+  const rec = records[text];
+  if (!rec) return headerHTML('紀錄詳情') + '<div class="empty-state"><p>無紀錄</p></div>';
+
+  const history = rec.history || [];
+  return `
+    ${headerHTML(text + ' 學習紀錄')}
+    <div class="card fade-in text-center">
+      <div style="font-size:64px;font-weight:700;">${text}</div>
+      <div style="margin-top:12px;font-size:18px;">
+        答對 <span style="color:var(--success);font-weight:700;">${rec.correct || 0}</span> 次 ／
+        答錯 <span style="color:var(--danger);font-weight:700;">${rec.wrong || 0}</span> 次
+      </div>
+    </div>
+    ${history.length > 0 ? `
+      <div class="card">
+        <h3 style="margin-bottom:12px;">作答歷史</h3>
+        ${history.slice(-20).reverse().map(h => `
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:15px;">
+            <span>${new Date(h.date).toLocaleString('zh-TW')}</span>
+            <span style="font-weight:700;color:${h.result === 'correct' ? 'var(--success)' : 'var(--danger)'};">${h.result === 'correct' ? '✓ 正確' : '✗ 錯誤'}</span>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+  `;
+}
+
+// --- REWARDS ---
+function renderRewards() {
+  const points = getPoints();
+  const rewards = getRewards();
+
+  return `
+    ${headerHTML('🎁 獎勵商店')}
+    <div class="points-bar" style="font-size:24px;">⭐ 目前點數：${points}</div>
+    <div class="card text-center mb-12">
+      <p style="color:var(--text-light);font-size:15px;">考試得 100 分可獲得 1 點！</p>
+    </div>
+    ${rewards.length === 0 ? `
+      <div class="empty-state">
+        <div class="icon">🎁</div>
+        <p>尚未設定獎勵<br>點擊下方按鈕新增</p>
+      </div>
+    ` : `
+      <div class="list-container">
+        ${rewards.map(r => `
+          <div class="reward-item">
+            <div class="reward-info">
+              <h3>${r.name}</h3>
+              <div class="cost">需要 ${r.cost} 點</div>
+            </div>
+            ${points >= r.cost ?
+              `<button class="btn btn-sm btn-accent" data-action="redeemReward" data-id="${r.id}">兌換</button>` :
+              `<button class="btn btn-sm btn-outline" disabled style="opacity:0.4">點數不足</button>`
+            }
+            <button class="word-delete" data-action="deleteReward" data-id="${r.id}">✕</button>
+          </div>
+        `).join('')}
+      </div>
+    `}
+    <button class="fab" data-action="goAddReward">＋</button>
+  `;
+}
+
+// --- ADD REWARD ---
+function renderAddReward() {
+  return `
+    ${headerHTML('新增獎勵')}
+    <div class="card fade-in">
+      <div class="form-group">
+        <label>獎勵名稱</label>
+        <input class="form-input" id="rewardName" placeholder="例：看一集卡通" />
+      </div>
+      <div class="form-group">
+        <label>所需點數</label>
+        <input class="form-input" id="rewardCost" type="number" min="1" value="5" />
+      </div>
+      <button class="btn btn-primary btn-block mt-12" data-action="saveReward">新增獎勵</button>
+    </div>
+  `;
+}
+
+// --- SETTINGS ---
+function renderSettings() {
+  return `
+    ${headerHTML('⚙️ 系統設定')}
+    <div class="card fade-in">
+      <h3 style="margin-bottom:16px;">資料管理</h3>
+      <p style="color:var(--text-light);font-size:14px;margin-bottom:16px;">需要輸入管理密碼才能執行以下操作（預設密碼：1234）</p>
+      <div class="flex flex-col gap-12">
+        <button class="btn btn-danger btn-block" data-action="systemReset">🗑 重置所有資料</button>
+        <button class="btn btn-primary btn-block" data-action="exportBackup">💾 匯出備份</button>
+        <button class="btn btn-accent btn-block" data-action="importBackup">📂 匯入備份</button>
+      </div>
+      <input type="file" id="importFileInput" accept=".json" class="hidden" />
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:12px;">修改管理密碼</h3>
+      <div class="form-group">
+        <label>目前密碼</label>
+        <input class="form-input" id="oldPassword" type="password" placeholder="輸入目前密碼" />
+      </div>
+      <div class="form-group">
+        <label>新密碼</label>
+        <input class="form-input" id="newPassword" type="password" placeholder="輸入新密碼" />
+      </div>
+      <button class="btn btn-outline btn-block" data-action="changePassword">變更密碼</button>
+    </div>
+  `;
+}
+
+// ========== CANVAS ==========
+let canvasDrawing = false;
+let canvasCtx = null;
+let lastPos = null;
+
+function initCanvas() {
+  const canvas = document.getElementById('testCanvas');
+  if (!canvas) return;
+  const wrapper = canvas.parentElement;
+  const size = wrapper.clientWidth;
+  canvas.width = size;
+  canvas.height = size;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  canvasCtx = canvas.getContext('2d');
+  canvasCtx.lineCap = 'round';
+  canvasCtx.lineJoin = 'round';
+  canvasCtx.lineWidth = 5;
+  canvasCtx.strokeStyle = '#2C3E50';
+
+  // Draw guide lines
+  drawGuideLines(canvasCtx, size);
+
+  canvas.addEventListener('mousedown', onCanvasStart);
+  canvas.addEventListener('mousemove', onCanvasMove);
+  canvas.addEventListener('mouseup', onCanvasEnd);
+  canvas.addEventListener('mouseleave', onCanvasEnd);
+  canvas.addEventListener('touchstart', onCanvasTouchStart, { passive: false });
+  canvas.addEventListener('touchmove', onCanvasTouchMove, { passive: false });
+  canvas.addEventListener('touchend', onCanvasEnd);
+}
+
+function drawGuideLines(ctx, size) {
+  ctx.save();
+  ctx.strokeStyle = '#E0E6ED';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([8, 4]);
+  ctx.beginPath();
+  ctx.moveTo(size / 2, 0); ctx.lineTo(size / 2, size);
+  ctx.moveTo(0, size / 2); ctx.lineTo(size, size / 2);
+  ctx.stroke();
+  ctx.restore();
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = '#2C3E50';
+}
+
+function getCanvasPos(e, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function onCanvasStart(e) {
+  canvasDrawing = true;
+  lastPos = getCanvasPos(e, e.target);
+}
+function onCanvasMove(e) {
+  if (!canvasDrawing || !canvasCtx) return;
+  const pos = getCanvasPos(e, e.target);
+  canvasCtx.beginPath();
+  canvasCtx.moveTo(lastPos.x, lastPos.y);
+  canvasCtx.lineTo(pos.x, pos.y);
+  canvasCtx.stroke();
+  lastPos = pos;
+}
+function onCanvasEnd() { canvasDrawing = false; lastPos = null; }
+function onCanvasTouchStart(e) {
+  e.preventDefault();
+  const touch = e.touches[0];
+  canvasDrawing = true;
+  lastPos = getCanvasPos(touch, e.target);
+}
+function onCanvasTouchMove(e) {
+  e.preventDefault();
+  if (!canvasDrawing || !canvasCtx) return;
+  const touch = e.touches[0];
+  const pos = getCanvasPos(touch, e.target);
+  canvasCtx.beginPath();
+  canvasCtx.moveTo(lastPos.x, lastPos.y);
+  canvasCtx.lineTo(pos.x, pos.y);
+  canvasCtx.stroke();
+  lastPos = pos;
+}
+
+function getCanvasImage() {
+  const canvas = document.getElementById('testCanvas');
+  return canvas ? canvas.toDataURL('image/png') : '';
+}
+
+function clearCanvasArea() {
+  const canvas = document.getElementById('testCanvas');
+  if (!canvas || !canvasCtx) return;
+  canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGuideLines(canvasCtx, canvas.width);
+}
+
+// ========== HANDLERS ==========
+const handlers = {
+  goBack: () => goBack(),
+  goHome: () => { history_stack.length = 0; currentView = 'home'; viewParams = {}; render(); },
+
+  // Lessons
+  goLessons: () => navigate('home'),
+  addLesson: () => {
+    const lessons = getLessons();
+    const id = Date.now().toString();
+    const name = '第' + (lessons.length + 1) + '課';
+    lessons.push({ id, name, words: [], originalImage: null });
+    saveLessons(lessons);
+    navigate('lessonDetail', { lessonId: id });
+  },
+  openLesson: (e, el) => {
+    navigate('lessonDetail', { lessonId: el.dataset.id });
+  },
+  editLessonName: () => {
+    navigate('editLesson', { lessonId: viewParams.lessonId });
+  },
+  saveLessonName: () => {
+    const input = document.getElementById('lessonNameInput');
+    if (!input || !input.value.trim()) return;
+    const lessons = getLessons();
+    const lesson = lessons.find(l => l.id === viewParams.lessonId);
+    if (lesson) {
+      lesson.name = input.value.trim();
+      saveLessons(lessons);
+    }
+    goBack();
+  },
+  deleteLesson: (e, el) => {
+    if (!confirm('確定要刪除此課程嗎？')) return;
+    e.stopPropagation();
+    const lessons = getLessons().filter(l => l.id !== el.dataset.id);
+    saveLessons(lessons);
+    history_stack.length = 0;
+    currentView = 'home';
+    viewParams = {};
+    render();
+  },
+
+  // Words
+  goAddWord: () => navigate('addWord', { lessonId: viewParams.lessonId }),
+  saveWord: () => {
+    const rawText = document.getElementById('wordText').value.trim();
+    const rawZhuyin = document.getElementById('wordZhuyin').value.trim();
+    if (!rawText) { alert('請輸入字或詞'); return; }
+    const lessons = getLessons();
+    const lesson = lessons.find(l => l.id === viewParams.lessonId);
+    if (lesson) {
+      const textLines = rawText.split('\n').map(l => l.trim()).filter(l => l);
+      const zhuyinLines = rawZhuyin.split('\n').map(l => l.trim());
+      textLines.forEach((t, i) => {
+        lesson.words.push({ id: (Date.now() + i).toString(), text: t, zhuyin: zhuyinLines[i] || autoGenerateZhuyin(t) });
+      });
+      saveLessons(lessons);
+    }
+    goBack();
+  },
+  saveAndContinue: () => {
+    const rawText = document.getElementById('wordText').value.trim();
+    const rawZhuyin = document.getElementById('wordZhuyin').value.trim();
+    if (!rawText) { alert('請輸入字或詞'); return; }
+    const lessons = getLessons();
+    const lesson = lessons.find(l => l.id === viewParams.lessonId);
+    if (lesson) {
+      const textLines = rawText.split('\n').map(l => l.trim()).filter(l => l);
+      const zhuyinLines = rawZhuyin.split('\n').map(l => l.trim());
+      textLines.forEach((t, i) => {
+        lesson.words.push({ id: (Date.now() + i).toString(), text: t, zhuyin: zhuyinLines[i] || autoGenerateZhuyin(t) });
+      });
+      saveLessons(lessons);
+    }
+    document.getElementById('wordText').value = '';
+    document.getElementById('wordZhuyin').value = '';
+    document.getElementById('wordText').focus();
+  },
+  deleteWord: (e, el) => {
+    e.stopPropagation();
+    if (!confirm('確定要刪除嗎？')) return;
+    const lessons = getLessons();
+    const lesson = lessons.find(l => l.id === el.dataset.lesson);
+    if (lesson) {
+      lesson.words = lesson.words.filter(w => w.id !== el.dataset.id);
+      saveLessons(lessons);
+    }
+    render();
+  },
+  previewWord: (e, el) => {
+    speak(el.dataset.text);
+  },
+
+  // Original text
+  uploadOriginalText: () => {
+    const input = document.getElementById('originalTextInput');
+    if (input) {
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const lessons = getLessons();
+          const lesson = lessons.find(l => l.id === viewParams.lessonId);
+          if (lesson) {
+            lesson.originalImage = ev.target.result;
+            saveLessons(lessons);
+            render();
+          }
+        };
+        reader.readAsDataURL(file);
+      };
+      input.click();
+    }
+  },
+  viewOriginalText: () => {
+    navigate('originalText', { lessonId: viewParams.lessonId });
+  },
+
+  // OCR
+  goOcr: () => navigate('ocrImport', { lessonId: viewParams.lessonId }),
+
+  // Review
+  goReviewSetup: () => navigate('reviewSetup', { selectedLessons: [], reviewFilter: 'all' }),
+  toggleLessonCheck: (e, el) => {
+    const id = el.dataset.id;
+    let sel = viewParams.selectedLessons || [];
+    if (sel.includes(id)) { sel = sel.filter(x => x !== id); }
+    else { sel.push(id); }
+    viewParams.selectedLessons = sel;
+    render();
+  },
+  setReviewFilter: (e, el) => {
+    viewParams.reviewFilter = el.dataset.filter;
+    render();
+  },
+  startReview: () => {
+    const sel = viewParams.selectedLessons || [];
+    if (sel.length === 0) { alert('請選擇至少一個課程'); return; }
+    const lessons = getLessons();
+    let words = [];
+    sel.forEach(id => {
+      const l = lessons.find(x => x.id === id);
+      if (l) words.push(...l.words);
+    });
+    if (viewParams.reviewFilter === 'wrong') {
+      const records = getRecords();
+      words = words.filter(w => records[w.text] && (records[w.text].wrong || 0) > 0);
+    }
+    if (words.length === 0) { alert('沒有符合條件的字詞'); return; }
+    // Shuffle
+    for (let i = words.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [words[i], words[j]] = [words[j], words[i]];
+    }
+    navigate('review', { reviewWords: words, reviewIndex: 0 });
+  },
+  reviewPrev: () => {
+    if ((viewParams.reviewIndex || 0) > 0) {
+      viewParams.reviewIndex--;
+      render();
+    }
+  },
+  reviewNext: () => {
+    const words = viewParams.reviewWords || [];
+    const idx = viewParams.reviewIndex || 0;
+    if (idx < words.length - 1) {
+      viewParams.reviewIndex++;
+      render();
+    } else {
+      goBack();
+    }
+  },
+  speakWord: (e, el) => { speak(el.dataset.text); },
+  showStroke: (e, el) => {
+    const target = document.getElementById('strokeTarget');
+    if (!target) return;
+    target.innerHTML = '';
+    const chars = el.dataset.text.split('');
+    // Create all containers first
+    const divs = chars.map(ch => {
+      const div = document.createElement('div');
+      div.style.display = 'inline-block';
+      div.style.margin = '4px';
+      target.appendChild(div);
+      return { div, ch };
+    });
+    // Animate sequentially: wait for each character to finish before starting next
+    async function animateSequentially() {
+      for (const { div, ch } of divs) {
+        try {
+          const writer = HanziWriter.create(div, ch, {
+            width: 120, height: 120,
+            padding: 5,
+            showOutline: true,
+            strokeAnimationSpeed: 1,
+            delayBetweenStrokes: 300,
+          });
+          await new Promise(resolve => {
+            writer.animateCharacter({ onComplete: resolve });
+          });
+        } catch (err) {
+          div.innerHTML = `<span style="font-size:60px">${ch}</span>`;
+        }
+      }
+    }
+    animateSequentially();
+  },
+
+  // Test
+  goTestSetup: () => navigate('testSetup', { selectedLessons: [] }),
+  toggleTestLessonCheck: (e, el) => {
+    const id = el.dataset.id;
+    let sel = viewParams.selectedLessons || [];
+    if (sel.includes(id)) { sel = sel.filter(x => x !== id); }
+    else { sel.push(id); }
+    viewParams.selectedLessons = sel;
+    render();
+  },
+  startTest: () => {
+    const sel = viewParams.selectedLessons || [];
+    if (sel.length === 0) { alert('請選擇至少一個課程'); return; }
+    const lessons = getLessons();
+    let words = [];
+    sel.forEach(id => {
+      const l = lessons.find(x => x.id === id);
+      if (l) words.push(...l.words);
+    });
+    if (words.length === 0) { alert('所選課程沒有字詞'); return; }
+    for (let i = words.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [words[i], words[j]] = [words[j], words[i]];
+    }
+    navigate('test', {
+      testWords: words,
+      testIndex: 0,
+      canvasImages: [],
+      showAnswer: false,
+      selectedLessons: sel,
+    });
+  },
+  toggleAnswer: () => {
+    viewParams.showAnswer = !viewParams.showAnswer;
+    render();
+  },
+  clearCanvas: () => { clearCanvasArea(); },
+  testNext: () => {
+    const words = viewParams.testWords || [];
+    const idx = viewParams.testIndex || 0;
+    // Save canvas image
+    if (!viewParams.canvasImages) viewParams.canvasImages = [];
+    viewParams.canvasImages[idx] = getCanvasImage();
+    viewParams.showAnswer = false;
+
+    if (idx < words.length - 1) {
+      viewParams.testIndex++;
+      render();
+    } else {
+      // Last question - speak and go to evaluate
+      speak('辛苦了，你很棒，完成這一課，請爸爸媽媽來評分', () => {
+        navigate('evaluate', {
+          testWords: words,
+          canvasImages: viewParams.canvasImages,
+          grades: {},
+          selectedLessons: viewParams.selectedLessons,
+        });
+      });
+      // Also navigate after a timeout in case TTS doesn't fire onend
+      setTimeout(() => {
+        if (currentView === 'test') {
+          navigate('evaluate', {
+            testWords: words,
+            canvasImages: viewParams.canvasImages,
+            grades: {},
+            selectedLessons: viewParams.selectedLessons,
+          });
+        }
+      }, 5000);
+    }
+  },
+
+  // Evaluate
+  gradeCorrect: (e, el) => {
+    const idx = parseInt(el.dataset.idx);
+    viewParams.grades[idx] = true;
+    render();
+  },
+  gradeWrong: (e, el) => {
+    const idx = parseInt(el.dataset.idx);
+    viewParams.grades[idx] = false;
+    render();
+  },
+  showResult: () => {
+    const words = viewParams.testWords || [];
+    const grades = viewParams.grades || {};
+    let correct = 0;
+    const records = getRecords();
+    const now = new Date().toISOString();
+
+    words.forEach((w, i) => {
+      const isCorrect = grades[i] === true;
+      if (isCorrect) correct++;
+      // Update records
+      if (!records[w.text]) records[w.text] = { correct: 0, wrong: 0, history: [] };
+      if (isCorrect) records[w.text].correct++;
+      else records[w.text].wrong++;
+      records[w.text].history.push({ date: now, result: isCorrect ? 'correct' : 'wrong' });
+    });
+    saveRecords(records);
+
+    const score = Math.round((correct / words.length) * 100);
+    if (score === 100) {
+      const pts = getPoints();
+      savePoints(pts + 1);
+    }
+
+    // Feedback voice
+    if (score >= 90) speak('你好棒！');
+    else if (score >= 60) speak('請加油！');
+    else speak('請再考一次');
+
+    navigate('result', {
+      correctCount: correct,
+      totalCount: words.length,
+      selectedLessons: viewParams.selectedLessons,
+    });
+  },
+  retakeTest: () => {
+    const sel = viewParams.selectedLessons || [];
+    // Go back to test setup with selections
+    history_stack.length = 0;
+    currentView = 'testSetup';
+    viewParams = { selectedLessons: sel };
+    render();
+  },
+
+  // Records
+  goRecords: () => navigate('records'),
+  openRecordDetail: (e, el) => {
+    navigate('recordDetail', { wordText: el.dataset.text });
+  },
+
+  // Rewards
+  goRewards: () => navigate('rewards'),
+  goAddReward: () => navigate('addReward'),
+  saveReward: () => {
+    const name = document.getElementById('rewardName').value.trim();
+    const cost = parseInt(document.getElementById('rewardCost').value) || 1;
+    if (!name) { alert('請輸入獎勵名稱'); return; }
+    const rewards = getRewards();
+    rewards.push({ id: Date.now().toString(), name, cost });
+    saveRewards(rewards);
+    goBack();
+  },
+  redeemReward: (e, el) => {
+    const rewards = getRewards();
+    const reward = rewards.find(r => r.id === el.dataset.id);
+    if (!reward) return;
+    const points = getPoints();
+    if (points < reward.cost) { alert('點數不足'); return; }
+    if (!confirm(`確定要用 ${reward.cost} 點兌換「${reward.name}」嗎？`)) return;
+    savePoints(points - reward.cost);
+    speak('恭喜兌換成功！');
+    render();
+  },
+  deleteReward: (e, el) => {
+    e.stopPropagation();
+    if (!confirm('確定要刪除此獎勵嗎？')) return;
+    const rewards = getRewards().filter(r => r.id !== el.dataset.id);
+    saveRewards(rewards);
+    render();
+  },
+
+  // Settings
+  goSettings: () => navigate('settings'),
+  systemReset: () => {
+    const pwd = prompt('請輸入管理密碼：');
+    const savedPwd = localStorage.getItem('zhcn_admin_pwd') || '1234';
+    if (pwd !== savedPwd) { alert('密碼錯誤'); return; }
+    if (!confirm('⚠️ 確定要重置所有資料嗎？\n此操作無法復原！\n（建議先匯出備份）')) return;
+    if (!confirm('再次確認：所有課程、學習紀錄、點數將被清除！')) return;
+    Object.values(KEYS).forEach(k => localStorage.removeItem(k));
+    alert('所有資料已重置');
+    history_stack.length = 0;
+    currentView = 'home';
+    viewParams = {};
+    render();
+  },
+  exportBackup: () => {
+    const pwd = prompt('請輸入管理密碼：');
+    const savedPwd = localStorage.getItem('zhcn_admin_pwd') || '1234';
+    if (pwd !== savedPwd) { alert('密碼錯誤'); return; }
+    const backup = {
+      version: 1,
+      date: new Date().toISOString(),
+      lessons: getLessons(),
+      records: getRecords(),
+      points: getPoints(),
+      rewards: getRewards(),
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `國字練習備份_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    alert('備份已下載');
+  },
+  importBackup: () => {
+    const pwd = prompt('請輸入管理密碼：');
+    const savedPwd = localStorage.getItem('zhcn_admin_pwd') || '1234';
+    if (pwd !== savedPwd) { alert('密碼錯誤'); return; }
+    const input = document.getElementById('importFileInput');
+    if (!input) return;
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const backup = JSON.parse(ev.target.result);
+          if (!backup.lessons || !backup.records) {
+            alert('備份檔案格式不正確'); return;
+          }
+          if (!confirm(`確定要匯入此備份嗎？\n備份日期：${backup.date || '未知'}\n課程數：${backup.lessons.length}\n這將覆蓋目前所有資料！`)) return;
+          saveLessons(backup.lessons);
+          saveRecords(backup.records);
+          savePoints(backup.points || 0);
+          saveRewards(backup.rewards || []);
+          alert('備份匯入成功！');
+          history_stack.length = 0;
+          currentView = 'home';
+          viewParams = {};
+          render();
+        } catch (err) {
+          alert('匯入失敗：檔案格式錯誤');
+        }
+      };
+      reader.readAsText(file);
+      input.value = '';
+    };
+    input.click();
+  },
+  changePassword: () => {
+    const oldPwd = document.getElementById('oldPassword').value;
+    const newPwd = document.getElementById('newPassword').value;
+    const savedPwd = localStorage.getItem('zhcn_admin_pwd') || '1234';
+    if (oldPwd !== savedPwd) { alert('目前密碼錯誤'); return; }
+    if (!newPwd || newPwd.length < 4) { alert('新密碼至少需要 4 個字元'); return; }
+    localStorage.setItem('zhcn_admin_pwd', newPwd);
+    alert('密碼已更新！');
+    document.getElementById('oldPassword').value = '';
+    document.getElementById('newPassword').value = '';
+  },
+};
+
+// ========== OCR ==========
+function initOCR() {
+  // Listen for file input on OCR page
+  document.addEventListener('change', async (e) => {
+    if (e.target.id !== 'ocrFileInput') return;
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const preview = document.getElementById('ocrPreview');
+    const result = document.getElementById('ocrResult');
+    if (preview) {
+      const url = URL.createObjectURL(file);
+      preview.innerHTML = `<img src="${url}" style="max-width:100%;border-radius:8px;" />`;
+    }
+
+    // Show loading
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'loading-overlay';
+    loadingDiv.innerHTML = '<div class="spinner"></div><p style="font-size:18px;">正在辨識文字...</p>';
+    document.body.appendChild(loadingDiv);
+
+    try {
+      if (typeof Tesseract === 'undefined') {
+        // Load Tesseract dynamically
+        await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+      }
+      const worker = await Tesseract.createWorker('chi_tra');
+      const { data } = await worker.recognize(file);
+      await worker.terminate();
+
+      const text = data.text.trim();
+      loadingDiv.remove();
+
+      if (result) {
+        if (!text) {
+          result.innerHTML = '<p style="color:var(--danger);">未偵測到文字，請嘗試其他圖片。</p>';
+          return;
+        }
+        // Extract characters (filter out non-Chinese)
+        const chars = [...new Set(text.replace(/[^\u4e00-\u9fff]/g, '').split(''))];
+        result.innerHTML = `
+          <h3>辨識結果（${chars.length} 個字）</h3>
+          <div style="margin:8px 0;display:flex;flex-wrap:wrap;gap:4px;">
+            ${chars.map(c => `<span class="chip" data-char="${c}">${c} <button class="chip-remove" data-action="removeOcrChar" data-char="${c}">✕</button></span>`).join('')}
+          </div>
+          <p style="font-size:14px;color:var(--text-light);margin:8px 0;">原始文字：${text.substring(0, 200)}</p>
+          <button class="btn btn-primary btn-block mt-12" onclick="addOcrChars()">全部加入詞庫</button>
+        `;
+      }
+    } catch (err) {
+      loadingDiv.remove();
+      if (result) result.innerHTML = `<p style="color:var(--danger);">辨識失敗：${err.message}</p>`;
+    }
+  });
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
+window.addOcrChars = function() {
+  const chips = document.querySelectorAll('#ocrResult .chip');
+  const lessons = getLessons();
+  const lesson = lessons.find(l => l.id === viewParams.lessonId);
+  if (!lesson) return;
+
+  let count = 0;
+  chips.forEach(chip => {
+    const ch = chip.dataset.char;
+    if (ch && !lesson.words.find(w => w.text === ch)) {
+      lesson.words.push({ id: Date.now().toString() + count, text: ch, zhuyin: '' });
+      count++;
+    }
+  });
+  saveLessons(lessons);
+  alert(`已加入 ${count} 個字到詞庫`);
+  goBack();
+};
+
+// ========== INIT ==========
+function init() {
+  render();
+  initOCR();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
