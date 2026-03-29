@@ -706,6 +706,7 @@ function render() {
   const app = document.getElementById('app');
   switch (currentView) {
     case 'home': app.innerHTML = renderHome(); break;
+    case 'addLessonSetup': app.innerHTML = renderAddLessonSetup(); break;
     case 'lessonDetail': app.innerHTML = renderLessonDetail(); break;
     case 'addWord': app.innerHTML = renderAddWord(); break;
     case 'editLesson': app.innerHTML = renderEditLesson(); break;
@@ -764,6 +765,27 @@ function headerHTML(title, showBack = true, actionsHTML = '') {
 // ========== VIEWS ==========
 
 // --- HOME ---
+function renderAddLessonSetup() {
+  return `
+    ${headerHTML('新增課程')}
+    <div class="card fade-in" style="text-align:center;">
+      <h3 style="margin-bottom:20px;">請選擇課程類型</h3>
+      <div style="display:flex;gap:16px;justify-content:center;">
+        <div class="home-card" data-action="confirmAddLesson" data-type="chinese" style="flex:1;max-width:160px;cursor:pointer;">
+          <div class="icon" style="font-size:48px;">🀄</div>
+          <div class="label" style="font-size:18px;font-weight:bold;margin-top:8px;">國字</div>
+          <div style="font-size:13px;color:var(--text-light);margin-top:4px;">注音、筆順、部首</div>
+        </div>
+        <div class="home-card" data-action="confirmAddLesson" data-type="english" style="flex:1;max-width:160px;cursor:pointer;">
+          <div class="icon" style="font-size:48px;">🔤</div>
+          <div class="label" style="font-size:18px;font-weight:bold;margin-top:8px;">英文</div>
+          <div style="font-size:13px;color:var(--text-light);margin-top:4px;">單字、中文翻譯</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderHome() {
   const lessons = getLessons();
   const points = getPoints();
@@ -801,8 +823,8 @@ function renderHome() {
       ${lessons.map((l, i) => `
         <div class="list-item" data-action="openLesson" data-id="${l.id}">
           <div class="item-text">
-            <h3>${l.name}</h3>
-            <p>${l.words.length} 個字詞</p>
+            <h3>${l.type === 'english' ? '🔤 ' : '🀄 '}${l.name}</h3>
+            <p>${l.words.length} 個${l.type === 'english' ? '單字' : '字詞'}</p>
           </div>
           <span class="arrow">›</span>
         </div>
@@ -836,9 +858,12 @@ function renderLessonDetail() {
     ` : `
       <div class="list-container">
         ${lesson.words.map(w => `
-          <div class="list-item" data-action="previewWord" data-text="${w.text}" data-zhuyin="${w.zhuyin}">
+          <div class="list-item" data-action="previewWord" data-text="${w.text}" data-zhuyin="${w.zhuyin || ''}">
             <div class="item-text">
-              <h3>${w.text} <span style="font-size:16px;color:var(--primary);margin-left:8px;">${w.zhuyin}</span><span style="font-size:13px;color:var(--text-light);margin-left:8px;">部首：${w.radical || autoGenerateRadical(w.text) || ''}</span></h3>
+              ${lesson.type === 'english'
+                ? `<h3>${w.text} <span style="font-size:15px;color:var(--primary);margin-left:8px;">${w.meaning || ''}</span></h3>`
+                : `<h3>${w.text} <span style="font-size:16px;color:var(--primary);margin-left:8px;">${w.zhuyin}</span><span style="font-size:13px;color:var(--text-light);margin-left:8px;">部首：${w.radical || autoGenerateRadical(w.text) || ''}</span></h3>`
+              }
             </div>
             <button class="word-delete" data-action="deleteWord" data-id="${w.id}" data-lesson="${lesson.id}">✕</button>
           </div>
@@ -851,6 +876,31 @@ function renderLessonDetail() {
 
 // --- ADD WORD ---
 function renderAddWord() {
+  const lessons = getLessons();
+  const lesson = lessons.find(l => l.id === viewParams.lessonId);
+  const isEnglish = lesson && lesson.type === 'english';
+
+  if (isEnglish) {
+    return `
+      ${headerHTML('新增英文單字')}
+      <div class="card fade-in">
+        <div class="form-group">
+          <label>英文單字 <span style="font-size:13px;color:var(--text-light);">（可輸入多行，每行一個單字）</span></label>
+          <textarea class="form-input" id="wordText" placeholder="例：&#10;apple&#10;banana&#10;school" rows="3" autofocus style="resize:vertical;"></textarea>
+        </div>
+        <div class="form-group">
+          <label>中文翻譯 <span style="font-size:13px;color:var(--text-light);">（多行以換行對應）</span></label>
+          <div style="display:flex;gap:8px;align-items:flex-start;">
+            <textarea class="form-input" id="wordMeaning" placeholder="例：&#10;蘋果&#10;香蕉&#10;學校" rows="3" style="resize:vertical;flex:1;"></textarea>
+          </div>
+          <button class="btn btn-sm btn-outline mt-12" data-action="translateEnglish" style="width:100%;">🔄 自動翻譯中文</button>
+        </div>
+        <button class="btn btn-primary btn-block mt-12" data-action="saveWord">新增</button>
+        <button class="btn btn-outline btn-block mt-12" data-action="saveAndContinue">新增並繼續</button>
+      </div>
+    `;
+  }
+
   return `
     ${headerHTML('新增字詞')}
     <div class="card fade-in">
@@ -947,6 +997,24 @@ function renderReview() {
   const idx = viewParams.reviewIndex || 0;
   if (words.length === 0) return headerHTML('複習模式') + '<div class="empty-state"><p>沒有符合條件的字詞</p></div>';
   const word = words[idx];
+  const isEnglish = viewParams.reviewType === 'english';
+
+  if (isEnglish) {
+    return `
+      ${headerHTML(`複習 (${idx + 1}/${words.length})`)}
+      <div class="card review-card fade-in">
+        <div style="text-align:center;font-size:18px;color:var(--primary);margin-bottom:4px;">${word.meaning || ''}</div>
+        <div class="review-char pop-in">${word.text}</div>
+        <div class="flex-center gap-12 mt-16">
+          <button class="btn btn-icon btn-primary" data-action="speakEnglish" data-text="${word.text}" title="發音">🔊</button>
+        </div>
+      </div>
+      <div class="flex-center gap-12 mt-16" style="padding:0 16px;">
+        <button class="btn btn-outline" data-action="reviewPrev" ${idx === 0 ? 'disabled style="opacity:0.4"' : ''}>← 上一個</button>
+        <button class="btn btn-primary" data-action="reviewNext">${idx === words.length - 1 ? '完成' : '下一個 →'}</button>
+      </div>
+    `;
+  }
 
   return `
     ${headerHTML(`複習 (${idx + 1}/${words.length})`)}
@@ -976,6 +1044,13 @@ function autoPlayReview() {
   // Small delay to ensure DOM is ready
   setTimeout(() => {
     // Auto-play pronunciation
+    if (viewParams.reviewType === 'english') {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(word.text);
+      u.lang = 'en-US'; u.rate = 0.8;
+      speechSynthesis.speak(u);
+      return;
+    }
     speak(word.text);
     // Auto-play stroke order animation
     const target = document.getElementById('strokeTarget');
@@ -1305,11 +1380,12 @@ function initCanvas() {
   const canvas = document.getElementById('testCanvas');
   if (!canvas) return;
   const wrapper = canvas.parentElement;
-  const size = wrapper.clientWidth;
-  canvas.width = size;
-  canvas.height = size;
-  canvas.style.width = size + 'px';
-  canvas.style.height = size + 'px';
+  const w = wrapper.clientWidth;
+  const h = Math.min(350, w);
+  canvas.width = w;
+  canvas.height = h;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
   canvasCtx = canvas.getContext('2d');
   canvasCtx.lineCap = 'round';
   canvasCtx.lineJoin = 'round';
@@ -1317,7 +1393,7 @@ function initCanvas() {
   canvasCtx.strokeStyle = '#2C3E50';
 
   // Draw guide lines
-  drawGuideLines(canvasCtx, size);
+  drawGuideLines(canvasCtx, w, h);
 
   canvas.addEventListener('mousedown', onCanvasStart);
   canvas.addEventListener('mousemove', onCanvasMove);
@@ -1388,7 +1464,7 @@ function clearCanvasArea() {
   const canvas = document.getElementById('testCanvas');
   if (!canvas || !canvasCtx) return;
   canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-  drawGuideLines(canvasCtx, canvas.width);
+  drawGuideLines(canvasCtx, canvas.width, canvas.height);
 }
 
 // ========== HANDLERS ==========
@@ -1399,10 +1475,15 @@ const handlers = {
   // Lessons
   goLessons: () => navigate('home'),
   addLesson: () => {
+    navigate('addLessonSetup');
+  },
+  confirmAddLesson: (e, el) => {
+    const type = el.dataset.type; // 'chinese' or 'english'
     const lessons = getLessons();
     const id = Date.now().toString();
-    const name = '第' + (lessons.length + 1) + '課';
-    lessons.push({ id, name, words: [], originalImage: null });
+    const count = lessons.filter(l => (l.type || 'chinese') === type).length + 1;
+    const name = type === 'english' ? 'English L' + count : '第' + (lessons.length + 1) + '課';
+    lessons.push({ id, name, type, words: [], originalImage: null });
     saveLessons(lessons);
     navigate('lessonDetail', { lessonId: id });
   },
@@ -1438,37 +1519,73 @@ const handlers = {
   goAddWord: () => navigate('addWord', { lessonId: viewParams.lessonId }),
   saveWord: () => {
     const rawText = document.getElementById('wordText').value.trim();
-    const rawZhuyin = document.getElementById('wordZhuyin').value.trim();
     if (!rawText) { alert('請輸入字或詞'); return; }
     const lessons = getLessons();
     const lesson = lessons.find(l => l.id === viewParams.lessonId);
-    if (lesson) {
-      const textLines = rawText.split('\n').map(l => l.trim()).filter(l => l);
+    if (!lesson) return;
+    const isEnglish = lesson.type === 'english';
+    const textLines = rawText.split('\n').map(l => l.trim()).filter(l => l);
+    if (isEnglish) {
+      const rawMeaning = (document.getElementById('wordMeaning') || {}).value || '';
+      const meaningLines = rawMeaning.split('\n').map(l => l.trim());
+      textLines.forEach((t, i) => {
+        lesson.words.push({ id: (Date.now() + i).toString(), text: t, meaning: meaningLines[i] || '', zhuyin: '', radical: '' });
+      });
+    } else {
+      const rawZhuyin = (document.getElementById('wordZhuyin') || {}).value || '';
       const zhuyinLines = rawZhuyin.split('\n').map(l => l.trim());
       textLines.forEach((t, i) => {
         lesson.words.push({ id: (Date.now() + i).toString(), text: t, zhuyin: zhuyinLines[i] || autoGenerateZhuyin(t), radical: autoGenerateRadical(t) });
       });
-      saveLessons(lessons);
     }
+    saveLessons(lessons);
     goBack();
   },
   saveAndContinue: () => {
     const rawText = document.getElementById('wordText').value.trim();
-    const rawZhuyin = document.getElementById('wordZhuyin').value.trim();
     if (!rawText) { alert('請輸入字或詞'); return; }
     const lessons = getLessons();
     const lesson = lessons.find(l => l.id === viewParams.lessonId);
-    if (lesson) {
-      const textLines = rawText.split('\n').map(l => l.trim()).filter(l => l);
+    if (!lesson) return;
+    const isEnglish = lesson.type === 'english';
+    const textLines = rawText.split('\n').map(l => l.trim()).filter(l => l);
+    if (isEnglish) {
+      const rawMeaning = (document.getElementById('wordMeaning') || {}).value || '';
+      const meaningLines = rawMeaning.split('\n').map(l => l.trim());
+      textLines.forEach((t, i) => {
+        lesson.words.push({ id: (Date.now() + i).toString(), text: t, meaning: meaningLines[i] || '', zhuyin: '', radical: '' });
+      });
+    } else {
+      const rawZhuyin = (document.getElementById('wordZhuyin') || {}).value || '';
       const zhuyinLines = rawZhuyin.split('\n').map(l => l.trim());
       textLines.forEach((t, i) => {
         lesson.words.push({ id: (Date.now() + i).toString(), text: t, zhuyin: zhuyinLines[i] || autoGenerateZhuyin(t), radical: autoGenerateRadical(t) });
       });
-      saveLessons(lessons);
     }
+    saveLessons(lessons);
     document.getElementById('wordText').value = '';
-    document.getElementById('wordZhuyin').value = '';
+    if (isEnglish && document.getElementById('wordMeaning')) document.getElementById('wordMeaning').value = '';
+    if (!isEnglish && document.getElementById('wordZhuyin')) document.getElementById('wordZhuyin').value = '';
     document.getElementById('wordText').focus();
+  },
+  translateEnglish: () => {
+    const rawText = document.getElementById('wordText').value.trim();
+    if (!rawText) { alert('請先輸入英文單字'); return; }
+    const words = rawText.split('\n').map(l => l.trim()).filter(l => l);
+    const btn = document.querySelector('[data-action="translateEnglish"]');
+    if (btn) { btn.disabled = true; btn.textContent = '🔄 翻譯中...'; }
+    const meaningEl = document.getElementById('wordMeaning');
+    // Translate each word using MyMemory free API
+    Promise.all(words.map(word =>
+      fetch('https://api.mymemory.translated.net/get?q=' + encodeURIComponent(word) + '&langpair=en|zh-TW')
+        .then(r => r.json())
+        .then(data => data.responseData && data.responseData.translatedText ? data.responseData.translatedText : word)
+        .catch(() => word)
+    )).then(translations => {
+      if (meaningEl) meaningEl.value = translations.join('\n');
+    }).finally(() => {
+      if (btn) { btn.disabled = false; btn.textContent = '🔄 自動翻譯中文'; }
+    });
   },
   deleteWord: (e, el) => {
     e.stopPropagation();
@@ -1547,7 +1664,10 @@ const handlers = {
       const j = Math.floor(Math.random() * (i + 1));
       [words[i], words[j]] = [words[j], words[i]];
     }
-    navigate('review', { reviewWords: words, reviewIndex: 0 });
+    // Detect type from first selected lesson
+    const firstLesson = lessons.find(x => x.id === sel[0]);
+    const reviewType = firstLesson && firstLesson.type === 'english' ? 'english' : 'chinese';
+    navigate('review', { reviewWords: words, reviewIndex: 0, reviewType });
   },
   reviewPrev: () => {
     if ((viewParams.reviewIndex || 0) > 0) {
@@ -1566,6 +1686,13 @@ const handlers = {
     }
   },
   speakWord: (e, el) => { speak(el.dataset.text); },
+  speakEnglish: (e, el) => {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(el.dataset.text);
+    u.lang = 'en-US';
+    u.rate = 0.8;
+    speechSynthesis.speak(u);
+  },
   showStroke: (e, el) => {
     const target = document.getElementById('strokeTarget');
     if (!target) return;
