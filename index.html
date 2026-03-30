@@ -964,19 +964,30 @@ function renderOriginalText() {
 function renderReviewSetup() {
   const lessons = getLessons();
   if (lessons.length === 0) return headerHTML('複習模式') + '<div class="empty-state"><div class="icon">📚</div><p>尚無課程，請先新增課程。</p></div>';
+  const typeFilter = viewParams.reviewTypeFilter || 'chinese';
+  const filtered = typeFilter === 'all' ? lessons : lessons.filter(l => (l.type || 'chinese') === typeFilter);
 
   return `
     ${headerHTML('複習模式')}
     <div class="card fade-in">
+      <h3 style="margin-bottom:12px;">課程類型</h3>
+      <div class="flex gap-12 flex-wrap">
+        <button class="btn ${typeFilter === 'chinese' ? 'btn-primary' : 'btn-outline'}" data-action="setReviewTypeFilter" data-type="chinese">🀄 國字</button>
+        <button class="btn ${typeFilter === 'english' ? 'btn-primary' : 'btn-outline'}" data-action="setReviewTypeFilter" data-type="english">🔤 英文</button>
+        <button class="btn ${typeFilter === 'all' ? 'btn-primary' : 'btn-outline'}" data-action="setReviewTypeFilter" data-type="all">📚 全部</button>
+      </div>
+    </div>
+    <div class="card fade-in">
       <h3 style="margin-bottom:12px;">選擇課程</h3>
+      ${filtered.length === 0 ? '<p style="color:var(--text-light);">此類型尚無課程</p>' : `
       <div class="list-container" style="margin:0;box-shadow:none;">
-        ${lessons.map(l => `
+        ${filtered.map(l => `
           <div class="check-item ${viewParams.selectedLessons && viewParams.selectedLessons.includes(l.id) ? 'checked' : ''}" data-action="toggleLessonCheck" data-id="${l.id}">
             <div class="check-box">${viewParams.selectedLessons && viewParams.selectedLessons.includes(l.id) ? '✓' : ''}</div>
-            <span class="check-label">${l.name}（${l.words.length} 字）</span>
+            <span class="check-label">${l.type === 'english' ? '🔤 ' : '🀄 '}${l.name}（${l.words.length} ${l.type === 'english' ? '單字' : '字'}）</span>
           </div>
         `).join('')}
-      </div>
+      </div>`}
     </div>
     <div class="card">
       <h3 style="margin-bottom:12px;">練習範圍</h3>
@@ -1094,19 +1105,30 @@ function autoPlayReview() {
 function renderTestSetup() {
   const lessons = getLessons();
   if (lessons.length === 0) return headerHTML('考試模式') + '<div class="empty-state"><div class="icon">📝</div><p>尚無課程，請先新增課程。</p></div>';
+  const typeFilter = viewParams.testTypeFilter || 'chinese';
+  const filtered = typeFilter === 'all' ? lessons : lessons.filter(l => (l.type || 'chinese') === typeFilter);
 
   return `
     ${headerHTML('考試模式')}
     <div class="card fade-in">
+      <h3 style="margin-bottom:12px;">課程類型</h3>
+      <div class="flex gap-12 flex-wrap">
+        <button class="btn ${typeFilter === 'chinese' ? 'btn-primary' : 'btn-outline'}" data-action="setTestTypeFilter" data-type="chinese">🀄 國字</button>
+        <button class="btn ${typeFilter === 'english' ? 'btn-primary' : 'btn-outline'}" data-action="setTestTypeFilter" data-type="english">🔤 英文</button>
+        <button class="btn ${typeFilter === 'all' ? 'btn-primary' : 'btn-outline'}" data-action="setTestTypeFilter" data-type="all">📚 全部</button>
+      </div>
+    </div>
+    <div class="card fade-in">
       <h3 style="margin-bottom:12px;">選擇考試範圍</h3>
+      ${filtered.length === 0 ? '<p style="color:var(--text-light);">此類型尚無課程</p>' : `
       <div class="list-container" style="margin:0;box-shadow:none;">
-        ${lessons.map(l => `
+        ${filtered.map(l => `
           <div class="check-item ${viewParams.selectedLessons && viewParams.selectedLessons.includes(l.id) ? 'checked' : ''}" data-action="toggleTestLessonCheck" data-id="${l.id}">
             <div class="check-box">${viewParams.selectedLessons && viewParams.selectedLessons.includes(l.id) ? '✓' : ''}</div>
-            <span class="check-label">${l.name}（${l.words.length} 字）</span>
+            <span class="check-label">${l.type === 'english' ? '🔤 ' : '🀄 '}${l.name}（${l.words.length} ${l.type === 'english' ? '單字' : '字'}）</span>
           </div>
         `).join('')}
-      </div>
+      </div>`}
     </div>
     <div class="p-16">
       <button class="btn btn-accent btn-lg btn-block" data-action="startTest">開始考試</button>
@@ -1121,14 +1143,22 @@ function renderTest(app) {
   const word = words[idx];
   const showAnswer = viewParams.showAnswer || false;
   const isLast = idx === words.length - 1;
+  const isEnglish = viewParams.testType === 'english';
+
+  // For English: prompt = Chinese meaning, answer = English word
+  // For Chinese: prompt = zhuyin, answer = Chinese character
+  const promptText = isEnglish ? (word.meaning || word.text) : word.zhuyin;
+  const answerText = isEnglish ? word.text : word.text;
+  const speakAction = isEnglish ? 'speakWord' : 'speakWord';
+  const speakText = isEnglish ? (word.meaning || word.text) : word.text;
 
   app.innerHTML = `
     ${headerHTML(`考試 (${idx + 1}/${words.length})`)}
     <div class="test-container fade-in">
       <div class="test-prompt">
         <div class="test-progress">第 ${idx + 1} 題，共 ${words.length} 題</div>
-        <div class="test-zhuyin">${word.zhuyin}</div>
-        ${showAnswer ? `<div class="test-answer pop-in">${word.text}</div>` : '<div class="test-answer"></div>'}
+        <div class="test-zhuyin" style="${isEnglish ? 'font-size:1.8rem;' : ''}">${promptText}</div>
+        ${showAnswer ? `<div class="test-answer pop-in" style="${isEnglish ? 'font-family:sans-serif;font-size:2rem;' : ''}">${answerText}</div>` : '<div class="test-answer"></div>'}
       </div>
       <div class="test-canvas-wrapper">
         <div class="canvas-area" style="width:100%;aspect-ratio:4/3;position:relative;">
@@ -1136,7 +1166,7 @@ function renderTest(app) {
         </div>
       </div>
       <div class="test-actions">
-        <button class="btn btn-icon btn-primary" data-action="speakWord" data-text="${word.text}">🔊</button>
+        <button class="btn btn-icon btn-primary" data-action="speakWord" data-text="${speakText}">🔊</button>
         <button class="btn btn-icon btn-accent" data-action="toggleAnswer">👁</button>
         <button class="btn btn-sm btn-outline" data-action="clearCanvas">清除</button>
         <button class="btn btn-success btn-lg" data-action="testNext">${isLast ? '✅ 完成' : '完成 →'}</button>
@@ -1146,6 +1176,11 @@ function renderTest(app) {
 
   bindEvents();
   initCanvas();
+
+  // Auto-speak Chinese meaning for English test mode
+  if (isEnglish) {
+    setTimeout(() => { speak(word.meaning || word.text); }, 400);
+  }
 }
 
 // --- EVALUATE ---
@@ -1164,7 +1199,7 @@ function renderEvaluate() {
         <img src="${canvasImages[i] || ''}" alt="手寫" />
         <div class="eval-info">
           <div class="char">${w.text}</div>
-          <div class="zhuyin">${w.zhuyin}</div>
+          <div class="zhuyin">${(viewParams.testType === 'english' && w.meaning) ? w.meaning : (w.zhuyin || '')}</div>
         </div>
         ${grades[i] !== undefined ? `
           <div class="eval-marked ${grades[i] ? 'eval-correct' : 'eval-wrong'}">${grades[i] ? '✓' : '✗'}</div>
@@ -1641,6 +1676,11 @@ const handlers = {
     viewParams.selectedLessons = sel;
     render();
   },
+  setReviewTypeFilter: (e, el) => {
+    viewParams.reviewTypeFilter = el.dataset.type;
+    viewParams.selectedLessons = [];
+    render();
+  },
   setReviewFilter: (e, el) => {
     viewParams.reviewFilter = el.dataset.filter;
     render();
@@ -1738,6 +1778,11 @@ const handlers = {
     viewParams.selectedLessons = sel;
     render();
   },
+  setTestTypeFilter: (e, el) => {
+    viewParams.testTypeFilter = el.dataset.type;
+    viewParams.selectedLessons = [];
+    render();
+  },
   startTest: () => {
     const sel = viewParams.selectedLessons || [];
     if (sel.length === 0) { alert('請選擇至少一個課程'); return; }
@@ -1752,12 +1797,16 @@ const handlers = {
       const j = Math.floor(Math.random() * (i + 1));
       [words[i], words[j]] = [words[j], words[i]];
     }
+    // Detect test type from first selected lesson
+    const firstLesson = lessons.find(x => x.id === sel[0]);
+    const testType = firstLesson && firstLesson.type === 'english' ? 'english' : 'chinese';
     navigate('test', {
       testWords: words,
       testIndex: 0,
       canvasImages: [],
       showAnswer: false,
       selectedLessons: sel,
+      testType: testType,
     });
   },
   toggleAnswer: () => {
@@ -1784,6 +1833,7 @@ const handlers = {
           canvasImages: viewParams.canvasImages,
           grades: {},
           selectedLessons: viewParams.selectedLessons,
+          testType: viewParams.testType,
         });
       });
       // Also navigate after a timeout in case TTS doesn't fire onend
@@ -1794,6 +1844,7 @@ const handlers = {
             canvasImages: viewParams.canvasImages,
             grades: {},
             selectedLessons: viewParams.selectedLessons,
+            testType: viewParams.testType,
           });
         }
       }, 5000);
