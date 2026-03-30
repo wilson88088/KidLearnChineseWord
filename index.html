@@ -989,6 +989,16 @@ function renderReviewSetup() {
         `).join('')}
       </div>`}
     </div>
+    ${typeFilter === 'english' || typeFilter === 'all' ? `
+    <div class="card fade-in">
+      <h3 style="margin-bottom:12px;">英文發音模式</h3>
+      <div class="flex gap-12 flex-wrap">
+        <button class="btn ${(viewParams.enPronMode || 'full') === 'none' ? 'btn-primary' : 'btn-outline'}" data-action="setEnPronMode" data-mode="none">🔇 不發音</button>
+        <button class="btn ${(viewParams.enPronMode || 'full') === 'word' ? 'btn-primary' : 'btn-outline'}" data-action="setEnPronMode" data-mode="word">🔊 中文+英文</button>
+        <button class="btn ${(viewParams.enPronMode || 'full') === 'full' ? 'btn-primary' : 'btn-outline'}" data-action="setEnPronMode" data-mode="full">🔤 中文+英文+拼讀</button>
+      </div>
+    </div>
+    ` : ''}
     <div class="card">
       <h3 style="margin-bottom:12px;">練習範圍</h3>
       <div class="flex gap-12 flex-wrap">
@@ -1011,13 +1021,17 @@ function renderReview() {
   const isEnglish = viewParams.reviewType === 'english';
 
   if (isEnglish) {
+    const pronMode = viewParams.enPronMode || 'full';
+    const pronLabel = pronMode === 'none' ? '🔇 不發音' : pronMode === 'word' ? '🔊 中+英' : '🔤 中+英+拼讀';
     return `
       ${headerHTML(`複習 (${idx + 1}/${words.length})`)}
       <div class="card review-card fade-in">
         <div style="text-align:center;font-size:18px;color:var(--primary);margin-bottom:4px;">${word.meaning || ''}</div>
         <div class="review-char pop-in">${word.text}</div>
+        <div style="text-align:center;margin:8px 0;color:var(--text-light);font-size:14px;letter-spacing:3px;">${word.text.toUpperCase().split('').join(' ')}</div>
         <div class="flex-center gap-12 mt-16">
-          <button class="btn btn-icon btn-primary" data-action="speakEnglish" data-text="${word.text}" title="發音">🔊</button>
+          <button class="btn btn-icon btn-primary" data-action="replayEnPron" data-text="${word.text}" data-meaning="${word.meaning || ''}" title="播放發音">🔊</button>
+          <button class="btn btn-sm btn-outline" data-action="cycleEnPronMode" title="切換發音模式">${pronLabel}</button>
         </div>
       </div>
       <div class="flex-center gap-12 mt-16" style="padding:0 16px;">
@@ -1046,6 +1060,46 @@ function renderReview() {
   `;
 }
 
+// Helper: speak with promise
+// English voice: US female
+function getEnglishVoice() {
+  const voices = speechSynthesis.getVoices();
+  if (!voices.length) return null;
+  // Try US female voice
+  let match = voices.find(v => v.lang.replace('_', '-').startsWith('en-US') && ['female', 'woman', 'zira', 'samantha'].some(h => v.name.toLowerCase().includes(h)));
+  if (match) return match;
+  match = voices.find(v => v.name.includes('Google US English'));
+  if (match) return match;
+  match = voices.find(v => v.lang.replace('_', '-').startsWith('en-US'));
+  if (match) return match;
+  return voices.find(v => v.lang.startsWith('en')) || null;
+}
+
+function speakAsync(text, lang, rate) {
+  return new Promise(resolve => {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang || 'zh-TW';
+    u.rate = rate || 0.8;
+    // Apply English voice preference when speaking English
+    if (lang && lang.startsWith('en')) {
+      const v = getEnglishVoice();
+      if (v) { u.voice = v; u.lang = v.lang; }
+    }
+    u.onend = resolve;
+    u.onerror = resolve;
+    speechSynthesis.speak(u);
+    // Fallback timeout in case onend doesn't fire
+    setTimeout(resolve, Math.max(3000, text.length * 600));
+  });
+}
+
+// Preload voices (some browsers need this)
+if (typeof speechSynthesis !== 'undefined') {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
 // Auto-play pronunciation + stroke order when entering review mode
 function autoPlayReview() {
   const words = viewParams.reviewWords || [];
@@ -1056,10 +1110,28 @@ function autoPlayReview() {
   setTimeout(() => {
     // Auto-play pronunciation
     if (viewParams.reviewType === 'english') {
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(word.text);
-      u.lang = 'en-US'; u.rate = 0.8;
-      speechSynthesis.speak(u);
+      const mode = viewParams.enPronMode || 'full';
+      if (mode === 'none') return;
+      // Sequential: Chinese meaning → English word → spell letters
+      (async () => {
+        // Step 1: Speak Chinese meaning
+        const meaning = word.meaning || word.text;
+        await speakAsync(meaning, 'zh-TW', 0.8);
+        await new Promise(r => setTimeout(r, 400));
+        // Step 2: Speak English word
+        await speakAsync(word.text, 'en-US', 0.8);
+        if (mode === 'full') {
+          await new Promise(r => setTimeout(r, 400));
+          // Step 3: Spell out each letter
+          const letters = word.text.toUpperCase().split('');
+          for (const letter of letters) {
+            if (/[A-Z]/.test(letter)) {
+              await speakAsync(letter, 'en-US', 0.9);
+              await new Promise(r => setTimeout(r, 200));
+            }
+          }
+        }
+      })();
       return;
     }
     speak(word.text);
@@ -1681,6 +1753,10 @@ const handlers = {
     viewParams.selectedLessons = [];
     render();
   },
+  setEnPronMode: (e, el) => {
+    viewParams.enPronMode = el.dataset.mode;
+    render();
+  },
   setReviewFilter: (e, el) => {
     viewParams.reviewFilter = el.dataset.filter;
     render();
@@ -1707,7 +1783,8 @@ const handlers = {
     // Detect type from first selected lesson
     const firstLesson = lessons.find(x => x.id === sel[0]);
     const reviewType = firstLesson && firstLesson.type === 'english' ? 'english' : 'chinese';
-    navigate('review', { reviewWords: words, reviewIndex: 0, reviewType });
+    const enPronMode = viewParams.enPronMode || 'full';
+    navigate('review', { reviewWords: words, reviewIndex: 0, reviewType, enPronMode });
   },
   reviewPrev: () => {
     if ((viewParams.reviewIndex || 0) > 0) {
@@ -1731,7 +1808,37 @@ const handlers = {
     const u = new SpeechSynthesisUtterance(el.dataset.text);
     u.lang = 'en-US';
     u.rate = 0.8;
+    const v = getEnglishVoice();
+    if (v) { u.voice = v; u.lang = v.lang; }
     speechSynthesis.speak(u);
+  },
+  replayEnPron: (e, el) => {
+    const mode = viewParams.enPronMode || 'full';
+    const text = el.dataset.text;
+    const meaning = el.dataset.meaning || text;
+    if (mode === 'none') return;
+    (async () => {
+      await speakAsync(meaning, 'zh-TW', 0.8);
+      await new Promise(r => setTimeout(r, 400));
+      await speakAsync(text, 'en-US', 0.8);
+      if (mode === 'full') {
+        await new Promise(r => setTimeout(r, 400));
+        const letters = text.toUpperCase().split('');
+        for (const letter of letters) {
+          if (/[A-Z]/.test(letter)) {
+            await speakAsync(letter, 'en-US', 0.9);
+            await new Promise(r => setTimeout(r, 200));
+          }
+        }
+      }
+    })();
+  },
+  cycleEnPronMode: () => {
+    const modes = ['none', 'word', 'full'];
+    const current = viewParams.enPronMode || 'full';
+    const nextIdx = (modes.indexOf(current) + 1) % modes.length;
+    viewParams.enPronMode = modes[nextIdx];
+    render();
   },
   showStroke: (e, el) => {
     const target = document.getElementById('strokeTarget');
