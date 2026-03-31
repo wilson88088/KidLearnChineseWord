@@ -718,6 +718,7 @@ function render() {
   const app = document.getElementById('app');
   switch (currentView) {
     case 'home': app.innerHTML = renderHome(); break;
+    case 'lessonManage': app.innerHTML = renderLessonManage(); break;
     case 'addLessonSetup': app.innerHTML = renderAddLessonSetup(); break;
     case 'lessonDetail': app.innerHTML = renderLessonDetail(); break;
     case 'addWord': app.innerHTML = renderAddWord(); break;
@@ -830,9 +831,17 @@ function renderHome() {
         <div class="label">系統設定</div>
       </div>
     </div>
+  `;
+}
+
+// --- LESSON MANAGE ---
+function renderLessonManage() {
+  const lessons = getLessons();
+  return `
+    ${headerHTML('📚 課程管理')}
     ${lessons.length > 0 ? `
     <div class="list-container">
-      ${lessons.map((l, i) => `
+      ${lessons.map(l => `
         <div class="list-item" data-action="openLesson" data-id="${l.id}">
           <div class="item-text">
             <h3>${l.type === 'english' ? '🔤 ' : '🀄 '}${l.name}</h3>
@@ -841,7 +850,11 @@ function renderHome() {
           <span class="arrow">›</span>
         </div>
       `).join('')}
-    </div>` : ''}
+    </div>` : `
+    <div class="empty-state fade-in">
+      <div class="icon">📚</div>
+      <p>尚無課程，點擊下方按鈕新增！</p>
+    </div>`}
     <button class="fab" data-action="addLesson">＋</button>
   `;
 }
@@ -1038,7 +1051,7 @@ function renderReview() {
     const spellSpeed = viewParams.spellSpeed || 'normal';
     const speedLabel = spellSpeed === 'slow' ? '🐢 慢' : spellSpeed === 'fast' ? '🐇 快' : '🚶 中';
     return `
-      ${headerHTML(`複習 (${idx + 1}/${words.length})`)}
+      ${headerHTML(`複習 (${idx + 1}/${words.length})`, true, '<button class="btn btn-sm btn-outline" data-action="goHome" title="回首頁">🏠</button>')}
       <div class="card review-card fade-in">
         <div style="text-align:center;font-size:28px;font-weight:700;color:var(--primary);margin-bottom:8px;">${word.meaning || ''}</div>
         <div class="review-char pop-in">${word.text}</div>
@@ -1057,7 +1070,7 @@ function renderReview() {
   }
 
   return `
-    ${headerHTML(`複習 (${idx + 1}/${words.length})`)}
+    ${headerHTML(`複習 (${idx + 1}/${words.length})`, true, '<button class="btn btn-sm btn-outline" data-action="goHome" title="回首頁">🏠</button>')}
     <div class="card review-card fade-in">
       <div class="review-zhuyin">${word.zhuyin}</div>
       <div class="review-char pop-in">${word.text}</div>
@@ -1599,7 +1612,7 @@ const handlers = {
   goHome: () => { history_stack.length = 0; currentView = 'home'; viewParams = {}; render(); },
 
   // Lessons
-  goLessons: () => navigate('home'),
+  goLessons: () => navigate('lessonManage'),
   addLesson: () => {
     navigate('addLessonSetup');
   },
