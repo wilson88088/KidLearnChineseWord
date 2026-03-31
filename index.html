@@ -842,12 +842,14 @@ function renderLessonManage() {
     ${lessons.length > 0 ? `
     <div class="list-container">
       ${lessons.map(l => `
-        <div class="list-item" data-action="openLesson" data-id="${l.id}">
-          <div class="item-text">
-            <h3>${l.type === 'english' ? '🔤 ' : '🀄 '}${l.name}</h3>
-            <p>${l.words.length} 個${l.type === 'english' ? '單字' : '字詞'}</p>
+        <div class="list-item" style="position:relative;">
+          <div style="flex:1;display:flex;align-items:center;cursor:pointer;" data-action="openLesson" data-id="${l.id}">
+            <div class="item-text">
+              <h3>${l.type === 'english' ? '🔤 ' : '🀄 '}${l.name}</h3>
+              <p>${l.words.length} 個${l.type === 'english' ? '單字' : '字詞'}</p>
+            </div>
           </div>
-          <span class="arrow">›</span>
+          <button class="btn btn-sm btn-danger" data-action="deleteLessonFromManage" data-id="${l.id}" style="margin-left:8px;min-width:36px;">🗑</button>
         </div>
       `).join('')}
     </div>` : `
@@ -1352,20 +1354,75 @@ function renderResult() {
 // --- RECORDS ---
 function renderRecords() {
   const records = getRecords();
-  const entries = Object.entries(records);
-  if (entries.length === 0) return headerHTML('學習紀錄') + '<div class="empty-state fade-in"><div class="icon">📊</div><p>尚無學習紀錄</p></div>';
+  const allEntries = Object.entries(records);
+  if (allEntries.length === 0) return headerHTML('學習紀錄') + '<div class="empty-state fade-in"><div class="icon">📊</div><p>尚無學習紀錄</p></div>';
 
+  const lessons = getLessons();
+  const typeFilter = viewParams.recTypeFilter || 'all';
+  const lessonFilter = viewParams.recLessonFilter || 'all';
+  const isDeleteMode = viewParams.recDeleteMode || false;
+  const selectedDel = viewParams.recSelectedDel || [];
+
+  // Build word→type mapping from lessons
+  const wordTypeMap = {};
+  const wordLessonMap = {};
+  lessons.forEach(l => {
+    l.words.forEach(w => {
+      wordTypeMap[w.text] = l.type || 'chinese';
+      if (!wordLessonMap[w.text]) wordLessonMap[w.text] = [];
+      wordLessonMap[w.text].push(l.id);
+    });
+  });
+
+  // Filter entries
+  let entries = allEntries;
+  if (typeFilter !== 'all') {
+    entries = entries.filter(([text]) => (wordTypeMap[text] || 'chinese') === typeFilter);
+  }
+  if (lessonFilter !== 'all') {
+    entries = entries.filter(([text]) => wordLessonMap[text] && wordLessonMap[text].includes(lessonFilter));
+  }
   entries.sort((a, b) => (b[1].wrong || 0) - (a[1].wrong || 0));
 
+  // Lesson options for filter (only lessons that have records)
+  const lessonIdsWithRecords = new Set();
+  allEntries.forEach(([text]) => { (wordLessonMap[text] || []).forEach(id => lessonIdsWithRecords.add(id)); });
+  const filterLessons = lessons.filter(l => lessonIdsWithRecords.has(l.id));
+
   return `
-    ${headerHTML('學習紀錄')}
+    ${headerHTML('學習紀錄', true, `
+      <button class="btn btn-sm ${isDeleteMode ? 'btn-danger' : 'btn-outline'}" data-action="toggleRecDeleteMode">${isDeleteMode ? '取消' : '管理'}</button>
+    `)}
+    <div class="card fade-in">
+      <h3 style="margin-bottom:8px;">篩選</h3>
+      <div class="flex gap-12 flex-wrap" style="margin-bottom:8px;">
+        <button class="btn btn-sm ${typeFilter === 'all' ? 'btn-primary' : 'btn-outline'}" data-action="setRecTypeFilter" data-type="all">📚 全部</button>
+        <button class="btn btn-sm ${typeFilter === 'chinese' ? 'btn-primary' : 'btn-outline'}" data-action="setRecTypeFilter" data-type="chinese">🀄 國字</button>
+        <button class="btn btn-sm ${typeFilter === 'english' ? 'btn-primary' : 'btn-outline'}" data-action="setRecTypeFilter" data-type="english">🔤 英文</button>
+      </div>
+      <div class="flex gap-12 flex-wrap">
+        <button class="btn btn-sm ${lessonFilter === 'all' ? 'btn-primary' : 'btn-outline'}" data-action="setRecLessonFilter" data-lesson="all">全部課程</button>
+        ${filterLessons.map(l => `
+          <button class="btn btn-sm ${lessonFilter === l.id ? 'btn-primary' : 'btn-outline'}" data-action="setRecLessonFilter" data-lesson="${l.id}">${l.name}</button>
+        `).join('')}
+      </div>
+    </div>
+    ${entries.length === 0 ? '<div class="empty-state fade-in"><p>無符合條件的紀錄</p></div>' : `
+    ${isDeleteMode && entries.length > 0 ? `
+    <div style="padding:0 16px;display:flex;gap:8px;margin-bottom:8px;">
+      <button class="btn btn-sm btn-outline" data-action="recSelectAll">全選</button>
+      <button class="btn btn-sm btn-outline" data-action="recDeselectAll">取消全選</button>
+      ${selectedDel.length > 0 ? `<button class="btn btn-sm btn-danger" data-action="deleteSelectedRecords">刪除 (${selectedDel.length})</button>` : ''}
+    </div>` : ''}
     <div class="list-container fade-in">
       ${entries.map(([text, rec]) => {
         const total = (rec.correct || 0) + (rec.wrong || 0);
         const correctPct = total > 0 ? ((rec.correct || 0) / total * 100) : 0;
         const wrongPct = total > 0 ? ((rec.wrong || 0) / total * 100) : 0;
+        const isSelected = selectedDel.includes(text);
         return `
-          <div class="list-item" data-action="openRecordDetail" data-text="${text}">
+          <div class="list-item" ${isDeleteMode ? `data-action="toggleRecSelect" data-text="${text}"` : `data-action="openRecordDetail" data-text="${text}"`} style="${isSelected ? 'background:rgba(239,68,68,0.08);' : ''}">
+            ${isDeleteMode ? `<div style="width:28px;height:28px;border-radius:6px;border:2px solid ${isSelected ? 'var(--danger)' : 'var(--border)'};display:flex;align-items:center;justify-content:center;margin-right:8px;flex-shrink:0;${isSelected ? 'background:var(--danger);color:#fff;' : ''}">${isSelected ? '✓' : ''}</div>` : ''}
             <div style="font-size:28px;font-weight:700;width:50px;text-align:center;">${text}</div>
             <div class="item-text">
               <div class="record-bar">
@@ -1377,11 +1434,11 @@ function renderRecords() {
                 <div class="bar bar-wrong" style="width:${Math.max(wrongPct, 2)}%;"></div>
               </div>
             </div>
-            <span class="arrow">›</span>
+            ${isDeleteMode ? `<button class="btn btn-sm btn-danger" data-action="deleteSingleRecord" data-text="${text}" style="margin-left:4px;min-width:36px;">🗑</button>` : '<span class="arrow">›</span>'}
           </div>
         `;
       }).join('')}
-    </div>
+    </div>`}
   `;
 }
 
@@ -1649,8 +1706,18 @@ const handlers = {
     const lessons = getLessons().filter(l => l.id !== el.dataset.id);
     saveLessons(lessons);
     history_stack.length = 0;
-    currentView = 'home';
+    currentView = 'lessonManage';
     viewParams = {};
+    render();
+  },
+  deleteLessonFromManage: (e, el) => {
+    e.stopPropagation();
+    const lessonId = el.dataset.id;
+    const lessons = getLessons();
+    const lesson = lessons.find(l => l.id === lessonId);
+    if (!lesson) return;
+    if (!confirm(`確定要刪除「${lesson.name}」嗎？`)) return;
+    saveLessons(lessons.filter(l => l.id !== lessonId));
     render();
   },
 
@@ -2066,9 +2133,69 @@ const handlers = {
   },
 
   // Records
-  goRecords: () => navigate('records'),
+  goRecords: () => navigate('records', { recTypeFilter: 'all', recLessonFilter: 'all', recDeleteMode: false, recSelectedDel: [] }),
   openRecordDetail: (e, el) => {
     navigate('recordDetail', { wordText: el.dataset.text });
+  },
+  setRecTypeFilter: (e, el) => {
+    viewParams.recTypeFilter = el.dataset.type;
+    render();
+  },
+  setRecLessonFilter: (e, el) => {
+    viewParams.recLessonFilter = el.dataset.lesson;
+    render();
+  },
+  toggleRecDeleteMode: () => {
+    viewParams.recDeleteMode = !viewParams.recDeleteMode;
+    viewParams.recSelectedDel = [];
+    render();
+  },
+  toggleRecSelect: (e, el) => {
+    const text = el.dataset.text;
+    if (!text) return;
+    let sel = viewParams.recSelectedDel || [];
+    if (sel.includes(text)) { sel = sel.filter(x => x !== text); }
+    else { sel.push(text); }
+    viewParams.recSelectedDel = sel;
+    render();
+  },
+  recSelectAll: () => {
+    // Select all currently visible entries
+    const records = getRecords();
+    const lessons = getLessons();
+    const typeFilter = viewParams.recTypeFilter || 'all';
+    const lessonFilter = viewParams.recLessonFilter || 'all';
+    const wordTypeMap = {};
+    const wordLessonMap = {};
+    lessons.forEach(l => { l.words.forEach(w => { wordTypeMap[w.text] = l.type || 'chinese'; if (!wordLessonMap[w.text]) wordLessonMap[w.text] = []; wordLessonMap[w.text].push(l.id); }); });
+    let entries = Object.keys(records);
+    if (typeFilter !== 'all') entries = entries.filter(t => (wordTypeMap[t] || 'chinese') === typeFilter);
+    if (lessonFilter !== 'all') entries = entries.filter(t => wordLessonMap[t] && wordLessonMap[t].includes(lessonFilter));
+    viewParams.recSelectedDel = entries;
+    render();
+  },
+  recDeselectAll: () => {
+    viewParams.recSelectedDel = [];
+    render();
+  },
+  deleteSingleRecord: (e, el) => {
+    e.stopPropagation();
+    const text = el.dataset.text;
+    if (!confirm(`確定要刪除「${text}」的學習紀錄嗎？`)) return;
+    const records = getRecords();
+    delete records[text];
+    saveRecords(records);
+    render();
+  },
+  deleteSelectedRecords: () => {
+    const sel = viewParams.recSelectedDel || [];
+    if (sel.length === 0) return;
+    if (!confirm(`確定要刪除所選的 ${sel.length} 筆學習紀錄嗎？`)) return;
+    const records = getRecords();
+    sel.forEach(text => delete records[text]);
+    saveRecords(records);
+    viewParams.recSelectedDel = [];
+    render();
   },
 
   // Rewards
