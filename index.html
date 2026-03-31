@@ -317,6 +317,18 @@ body {
   border: 2px solid var(--border);
   border-radius: 8px;
   object-fit: contain;
+  cursor: pointer;
+}
+.img-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85); z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; animation: fadeIn 0.2s;
+}
+.img-overlay img {
+  max-width: 92vw; max-height: 80vh;
+  border-radius: 12px; border: 3px solid #fff;
+  object-fit: contain; background: #fff;
   background: #fff;
 }
 .eval-info {
@@ -1023,15 +1035,18 @@ function renderReview() {
   if (isEnglish) {
     const pronMode = viewParams.enPronMode || 'full';
     const pronLabel = pronMode === 'none' ? '🔇 不發音' : pronMode === 'word' ? '🔊 中+英' : '🔤 中+英+拼讀';
+    const spellSpeed = viewParams.spellSpeed || 'normal';
+    const speedLabel = spellSpeed === 'slow' ? '🐢 慢' : spellSpeed === 'fast' ? '🐇 快' : '🚶 中';
     return `
       ${headerHTML(`複習 (${idx + 1}/${words.length})`)}
       <div class="card review-card fade-in">
-        <div style="text-align:center;font-size:18px;color:var(--primary);margin-bottom:4px;">${word.meaning || ''}</div>
+        <div style="text-align:center;font-size:28px;font-weight:700;color:var(--primary);margin-bottom:8px;">${word.meaning || ''}</div>
         <div class="review-char pop-in">${word.text}</div>
         <div style="text-align:center;margin:8px 0;color:var(--text-light);font-size:14px;letter-spacing:3px;">${word.text.toUpperCase().split('').join(' ')}</div>
         <div class="flex-center gap-12 mt-16">
           <button class="btn btn-icon btn-primary" data-action="replayEnPron" data-text="${word.text}" data-meaning="${word.meaning || ''}" title="播放發音">🔊</button>
           <button class="btn btn-sm btn-outline" data-action="cycleEnPronMode" title="切換發音模式">${pronLabel}</button>
+          ${pronMode === 'full' ? `<button class="btn btn-sm btn-outline" data-action="cycleSpellSpeed" title="拼讀語速">${speedLabel}</button>` : ''}
         </div>
       </div>
       <div class="flex-center gap-12 mt-16" style="padding:0 16px;">
@@ -1122,12 +1137,15 @@ function autoPlayReview() {
         await speakAsync(word.text, 'en-US', 0.8);
         if (mode === 'full') {
           await new Promise(r => setTimeout(r, 400));
-          // Step 3: Spell out each letter
+          // Step 3: Spell out each letter (speed based on setting)
+          const ss = viewParams.spellSpeed || 'normal';
+          const spRate = ss === 'slow' ? 0.6 : ss === 'fast' ? 1.2 : 0.9;
+          const spGap = ss === 'slow' ? 500 : ss === 'fast' ? 100 : 200;
           const letters = word.text.toUpperCase().split('');
           for (const letter of letters) {
             if (/[A-Z]/.test(letter)) {
-              await speakAsync(letter, 'en-US', 0.9);
-              await new Promise(r => setTimeout(r, 200));
+              await speakAsync(letter, 'en-US', spRate);
+              await new Promise(r => setTimeout(r, spGap));
             }
           }
         }
@@ -1238,7 +1256,8 @@ function renderTest(app) {
         </div>
       </div>
       <div class="test-actions">
-        <button class="btn btn-icon btn-primary" data-action="speakWord" data-text="${speakText}">🔊</button>
+        <button class="btn btn-icon btn-primary" data-action="speakWord" data-text="${speakText}" title="中文發音">🔊</button>
+        ${isEnglish ? `<button class="btn btn-icon btn-primary" data-action="speakEnglish" data-text="${word.text}" title="英文發音">🔤</button>` : ''}
         <button class="btn btn-icon btn-accent" data-action="toggleAnswer">👁</button>
         <button class="btn btn-sm btn-outline" data-action="clearCanvas">清除</button>
         <button class="btn btn-success btn-lg" data-action="testNext">${isLast ? '✅ 完成' : '完成 →'}</button>
@@ -1268,7 +1287,7 @@ function renderEvaluate() {
     </div>
     ${words.map((w, i) => `
       <div class="eval-item fade-in" style="animation-delay:${i * 0.05}s">
-        <img src="${canvasImages[i] || ''}" alt="手寫" />
+        <img src="${canvasImages[i] || ''}" alt="手寫" data-action="zoomImage" data-src="${canvasImages[i] || ''}" />
         <div class="eval-info">
           <div class="char">${w.text}</div>
           <div class="zhuyin">${(viewParams.testType === 'english' && w.meaning) ? w.meaning : (w.zhuyin || '')}</div>
@@ -1784,7 +1803,8 @@ const handlers = {
     const firstLesson = lessons.find(x => x.id === sel[0]);
     const reviewType = firstLesson && firstLesson.type === 'english' ? 'english' : 'chinese';
     const enPronMode = viewParams.enPronMode || 'full';
-    navigate('review', { reviewWords: words, reviewIndex: 0, reviewType, enPronMode });
+    const spellSpeed = viewParams.spellSpeed || 'normal';
+    navigate('review', { reviewWords: words, reviewIndex: 0, reviewType, enPronMode, spellSpeed });
   },
   reviewPrev: () => {
     if ((viewParams.reviewIndex || 0) > 0) {
@@ -1823,11 +1843,14 @@ const handlers = {
       await speakAsync(text, 'en-US', 0.8);
       if (mode === 'full') {
         await new Promise(r => setTimeout(r, 400));
+        const ss = viewParams.spellSpeed || 'normal';
+        const spRate = ss === 'slow' ? 0.6 : ss === 'fast' ? 1.2 : 0.9;
+        const spGap = ss === 'slow' ? 500 : ss === 'fast' ? 100 : 200;
         const letters = text.toUpperCase().split('');
         for (const letter of letters) {
           if (/[A-Z]/.test(letter)) {
-            await speakAsync(letter, 'en-US', 0.9);
-            await new Promise(r => setTimeout(r, 200));
+            await speakAsync(letter, 'en-US', spRate);
+            await new Promise(r => setTimeout(r, spGap));
           }
         }
       }
@@ -1838,6 +1861,13 @@ const handlers = {
     const current = viewParams.enPronMode || 'full';
     const nextIdx = (modes.indexOf(current) + 1) % modes.length;
     viewParams.enPronMode = modes[nextIdx];
+    render();
+  },
+  cycleSpellSpeed: () => {
+    const speeds = ['slow', 'normal', 'fast'];
+    const current = viewParams.spellSpeed || 'normal';
+    const nextIdx = (speeds.indexOf(current) + 1) % speeds.length;
+    viewParams.spellSpeed = speeds[nextIdx];
     render();
   },
   showStroke: (e, el) => {
@@ -1959,6 +1989,15 @@ const handlers = {
   },
 
   // Evaluate
+  zoomImage: (e, el) => {
+    const src = el.dataset.src;
+    if (!src) return;
+    const overlay = document.createElement('div');
+    overlay.className = 'img-overlay';
+    overlay.innerHTML = `<img src="${src}" alt="放大檢視" />`;
+    overlay.addEventListener('click', () => overlay.remove());
+    document.body.appendChild(overlay);
+  },
   gradeCorrect: (e, el) => {
     const idx = parseInt(el.dataset.idx);
     viewParams.grades[idx] = true;
