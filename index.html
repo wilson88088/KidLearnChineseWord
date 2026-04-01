@@ -329,6 +329,18 @@ body {
   max-width: 92vw; max-height: 80vh;
   border-radius: 12px; border: 3px solid #fff;
   object-fit: contain; background: #fff;
+}
+.img-picker-area {
+  border: 2px dashed var(--border); border-radius: 12px; padding: 16px;
+  text-align: center; position: relative; transition: border-color 0.2s;
+}
+.img-picker-area.dragover { border-color: var(--primary); background: rgba(79,70,229,0.05); }
+.img-picker-preview { max-width: 160px; max-height: 160px; border-radius: 8px; margin: 8px auto; display: block; }
+.img-search-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.img-search-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: pointer; border: 3px solid transparent; transition: border-color 0.2s; }
+.img-search-grid img:hover, .img-search-grid img.selected { border-color: var(--primary); }
+.img-search-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9998; display: flex; align-items: flex-end; justify-content: center; }
+.img-search-panel { background: var(--card); border-radius: 16px 16px 0 0; width: 100%; max-height: 80vh; overflow-y: auto; padding: 20px 16px; animation: fadeIn 0.2s; }
   background: #fff;
 }
 .eval-info {
@@ -721,7 +733,7 @@ function render() {
     case 'lessonManage': app.innerHTML = renderLessonManage(); break;
     case 'addLessonSetup': app.innerHTML = renderAddLessonSetup(); break;
     case 'lessonDetail': app.innerHTML = renderLessonDetail(); break;
-    case 'addWord': app.innerHTML = renderAddWord(); break;
+    case 'addWord': app.innerHTML = renderAddWord(); setupImagePicker(); updateImagePreview(); break;
     case 'editLesson': app.innerHTML = renderEditLesson(); break;
     case 'ocrImport': app.innerHTML = renderOcrImport(); break;
     case 'originalText': app.innerHTML = renderOriginalText(); break;
@@ -886,6 +898,7 @@ function renderLessonDetail() {
       <div class="list-container">
         ${lesson.words.map(w => `
           <div class="list-item" data-action="previewWord" data-text="${w.text}" data-zhuyin="${w.zhuyin || ''}">
+            ${w.image ? `<img src="${w.image}" style="width:40px;height:40px;border-radius:6px;object-fit:cover;margin-right:8px;flex-shrink:0;" />` : ''}
             <div class="item-text">
               ${lesson.type === 'english'
                 ? `<h3>${w.text} <span style="font-size:15px;color:var(--primary);margin-left:8px;">${w.meaning || ''}</span></h3>`
@@ -902,6 +915,22 @@ function renderLessonDetail() {
 }
 
 // --- ADD WORD ---
+function getImagePickerHTML() {
+  return `
+    <div class="form-group">
+      <label>圖像記憶 <span style="font-size:13px;color:var(--text-light);">（選填，單字一張圖）</span></label>
+      <div class="img-picker-area" id="imgPickerArea">
+        <div id="imgPreview"></div>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          <button type="button" class="btn btn-sm btn-outline" data-action="openImageSearch">🔍 網路搜尋</button>
+          <label class="btn btn-sm btn-outline" style="cursor:pointer;">📁 選擇檔案<input type="file" id="imgFileInput" accept="image/*" class="hidden" /></label>
+        </div>
+        <p style="font-size:12px;color:var(--text-light);margin-top:8px;">或將圖片拖曳到此區域</p>
+      </div>
+    </div>
+  `;
+}
+
 function renderAddWord() {
   const lessons = getLessons();
   const lesson = lessons.find(l => l.id === viewParams.lessonId);
@@ -922,6 +951,7 @@ function renderAddWord() {
           </div>
           <button class="btn btn-sm btn-outline mt-12" data-action="translateEnglish" style="width:100%;">🔄 自動翻譯中文</button>
         </div>
+        ${getImagePickerHTML()}
         <button class="btn btn-primary btn-block mt-12" data-action="saveWord">新增</button>
         <button class="btn btn-outline btn-block mt-12" data-action="saveAndContinue">新增並繼續</button>
       </div>
@@ -939,6 +969,7 @@ function renderAddWord() {
         <label>注音 <span style="font-size:13px;color:var(--text-light);">（自動產生，可手動修改；多行以換行對應）</span></label>
         <textarea class="form-input" id="wordZhuyin" placeholder="例：&#10;ㄒㄩㄝˊ ㄒㄧㄠˋ&#10;ㄐㄧㄣ ㄊㄧㄢ&#10;ㄇㄧㄥˊ ㄊㄧㄢ" rows="3" style="resize:vertical;"></textarea>
       </div>
+      ${getImagePickerHTML()}
       <button class="btn btn-primary btn-block mt-12" data-action="saveWord">新增</button>
       <button class="btn btn-outline btn-block mt-12" data-action="saveAndContinue">新增並繼續</button>
     </div>
@@ -1058,6 +1089,7 @@ function renderReview() {
         <div style="text-align:center;font-size:28px;font-weight:700;color:var(--primary);margin-bottom:8px;">${word.meaning || ''}</div>
         <div class="review-char pop-in">${word.text}</div>
         <div style="text-align:center;margin:8px 0;color:var(--text-light);font-size:14px;letter-spacing:3px;">${word.text.toUpperCase().split('').join(' ')}</div>
+        ${word.image ? `<div style="text-align:center;margin:12px 0;"><img src="${word.image}" style="max-width:200px;max-height:200px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.12);" /></div>` : ''}
         <div class="flex-center gap-12 mt-16">
           <button class="btn btn-icon btn-primary" data-action="replayEnPron" data-text="${word.text}" data-meaning="${word.meaning || ''}" title="播放發音">🔊</button>
           <button class="btn btn-sm btn-outline" data-action="cycleEnPronMode" title="切換發音模式">${pronLabel}</button>
@@ -1077,6 +1109,7 @@ function renderReview() {
       <div class="review-zhuyin">${word.zhuyin}</div>
       <div class="review-char pop-in">${word.text}</div>
       <div style="text-align:center;margin:8px 0;color:var(--text-light);font-size:15px;">部首：<span style="font-size:22px;font-weight:bold;color:var(--primary);">${word.radical || autoGenerateRadical(word.text) || '—'}</span></div>
+      ${word.image ? `<div style="text-align:center;margin:12px 0;"><img src="${word.image}" style="max-width:200px;max-height:200px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.12);" /></div>` : ''}
       <div class="review-stroke-container" id="strokeTarget"></div>
       <div class="flex-center gap-12 mt-16">
         <button class="btn btn-icon btn-primary" data-action="speakWord" data-text="${word.text}" title="發音">🔊</button>
@@ -1128,6 +1161,87 @@ function speakAsync(text, lang, rate) {
 if (typeof speechSynthesis !== 'undefined') {
   speechSynthesis.getVoices();
   speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+}
+
+// ========== IMAGE HELPERS ==========
+// Resize image to max dimension and return base64
+function resizeImageToBase64(file, maxSize, callback) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > maxSize) { h = h * maxSize / w; w = maxSize; } }
+      else { if (h > maxSize) { w = w * maxSize / h; h = maxSize; } }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.7));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function resizeImageUrlToBase64(url, maxSize, callback) {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    let w = img.width, h = img.height;
+    if (w > h) { if (w > maxSize) { h = h * maxSize / w; w = maxSize; } }
+    else { if (h > maxSize) { w = w * maxSize / h; h = maxSize; } }
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    try { callback(canvas.toDataURL('image/jpeg', 0.7)); } catch { callback(null); }
+  };
+  img.onerror = () => callback(null);
+  img.src = url;
+}
+
+// Set up image picker (drag & drop + file input) on the addWord page
+function setupImagePicker() {
+  const area = document.getElementById('imgPickerArea');
+  if (!area) return;
+  // Drag & drop
+  area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('dragover'); });
+  area.addEventListener('dragleave', () => area.classList.remove('dragover'));
+  area.addEventListener('drop', (e) => {
+    e.preventDefault(); area.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      resizeImageToBase64(file, 300, (b64) => {
+        viewParams.pendingImage = b64;
+        updateImagePreview();
+      });
+    }
+  });
+  // File input
+  const fileInput = document.getElementById('imgFileInput');
+  if (fileInput) {
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (file) {
+        resizeImageToBase64(file, 300, (b64) => {
+          viewParams.pendingImage = b64;
+          updateImagePreview();
+        });
+      }
+    });
+  }
+}
+
+function updateImagePreview() {
+  const preview = document.getElementById('imgPreview');
+  if (!preview) return;
+  if (viewParams.pendingImage) {
+    preview.innerHTML = `<img src="${viewParams.pendingImage}" class="img-picker-preview" /><button class="btn btn-sm btn-outline" data-action="clearPendingImage" style="margin-top:4px;">移除圖片</button>`;
+    preview.querySelectorAll('[data-action]').forEach(el => {
+      el.onclick = () => { viewParams.pendingImage = null; updateImagePreview(); };
+    });
+  } else {
+    preview.innerHTML = '';
+  }
 }
 
 // Auto-play pronunciation + stroke order when entering review mode
@@ -1731,19 +1845,21 @@ const handlers = {
     if (!lesson) return;
     const isEnglish = lesson.type === 'english';
     const textLines = rawText.split('\n').map(l => l.trim()).filter(l => l);
+    const img = viewParams.pendingImage || '';
     if (isEnglish) {
       const rawMeaning = (document.getElementById('wordMeaning') || {}).value || '';
       const meaningLines = rawMeaning.split('\n').map(l => l.trim());
       textLines.forEach((t, i) => {
-        lesson.words.push({ id: (Date.now() + i).toString(), text: t, meaning: meaningLines[i] || '', zhuyin: '', radical: '' });
+        lesson.words.push({ id: (Date.now() + i).toString(), text: t, meaning: meaningLines[i] || '', zhuyin: '', radical: '', image: i === 0 ? img : '' });
       });
     } else {
       const rawZhuyin = (document.getElementById('wordZhuyin') || {}).value || '';
       const zhuyinLines = rawZhuyin.split('\n').map(l => l.trim());
       textLines.forEach((t, i) => {
-        lesson.words.push({ id: (Date.now() + i).toString(), text: t, zhuyin: zhuyinLines[i] || autoGenerateZhuyin(t), radical: autoGenerateRadical(t) });
+        lesson.words.push({ id: (Date.now() + i).toString(), text: t, zhuyin: zhuyinLines[i] || autoGenerateZhuyin(t), radical: autoGenerateRadical(t), image: i === 0 ? img : '' });
       });
     }
+    viewParams.pendingImage = null;
     saveLessons(lessons);
     goBack();
   },
@@ -1755,24 +1871,94 @@ const handlers = {
     if (!lesson) return;
     const isEnglish = lesson.type === 'english';
     const textLines = rawText.split('\n').map(l => l.trim()).filter(l => l);
+    const img = viewParams.pendingImage || '';
     if (isEnglish) {
       const rawMeaning = (document.getElementById('wordMeaning') || {}).value || '';
       const meaningLines = rawMeaning.split('\n').map(l => l.trim());
       textLines.forEach((t, i) => {
-        lesson.words.push({ id: (Date.now() + i).toString(), text: t, meaning: meaningLines[i] || '', zhuyin: '', radical: '' });
+        lesson.words.push({ id: (Date.now() + i).toString(), text: t, meaning: meaningLines[i] || '', zhuyin: '', radical: '', image: i === 0 ? img : '' });
       });
     } else {
       const rawZhuyin = (document.getElementById('wordZhuyin') || {}).value || '';
       const zhuyinLines = rawZhuyin.split('\n').map(l => l.trim());
       textLines.forEach((t, i) => {
-        lesson.words.push({ id: (Date.now() + i).toString(), text: t, zhuyin: zhuyinLines[i] || autoGenerateZhuyin(t), radical: autoGenerateRadical(t) });
+        lesson.words.push({ id: (Date.now() + i).toString(), text: t, zhuyin: zhuyinLines[i] || autoGenerateZhuyin(t), radical: autoGenerateRadical(t), image: i === 0 ? img : '' });
       });
     }
+    viewParams.pendingImage = null;
     saveLessons(lessons);
     document.getElementById('wordText').value = '';
     if (isEnglish && document.getElementById('wordMeaning')) document.getElementById('wordMeaning').value = '';
     if (!isEnglish && document.getElementById('wordZhuyin')) document.getElementById('wordZhuyin').value = '';
     document.getElementById('wordText').focus();
+  },
+  openImageSearch: () => {
+    // Get search keyword from wordText input
+    const wordInput = document.getElementById('wordText');
+    let keyword = wordInput ? wordInput.value.split('\n')[0].trim() : '';
+    // For Chinese words, try to use meaning for better image results
+    const meaningInput = document.getElementById('wordMeaning');
+    // Build modal
+    const modal = document.createElement('div');
+    modal.className = 'img-search-modal';
+    modal.innerHTML = `
+      <div class="img-search-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h3 style="margin:0;">🔍 網路搜尋圖片</h3>
+          <button class="btn btn-sm btn-outline" id="imgSearchClose">✕</button>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <input class="form-input" id="imgSearchKeyword" placeholder="輸入搜尋關鍵字" value="${keyword}" style="flex:1;" />
+          <button class="btn btn-primary" id="imgSearchBtn">搜尋</button>
+        </div>
+        <div id="imgSearchResults" style="margin-top:12px;"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('#imgSearchClose').onclick = () => modal.remove();
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    const doSearch = () => {
+      const kw = modal.querySelector('#imgSearchKeyword').value.trim();
+      if (!kw) return;
+      const resultsDiv = modal.querySelector('#imgSearchResults');
+      resultsDiv.innerHTML = '<p style="text-align:center;color:var(--text-light);">搜尋中...</p>';
+      // Use Wikimedia Commons API
+      const url = 'https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=' + encodeURIComponent(kw) + '&gsrnamespace=6&gsrlimit=9&prop=imageinfo&iiprop=url|thumburl&iiurlwidth=300&format=json&origin=*';
+      fetch(url).then(r => r.json()).then(data => {
+        const pages = data.query && data.query.pages ? Object.values(data.query.pages) : [];
+        const images = pages.filter(p => p.imageinfo && p.imageinfo[0] && p.imageinfo[0].thumburl).map(p => p.imageinfo[0].thumburl);
+        if (images.length === 0) {
+          resultsDiv.innerHTML = '<p style="text-align:center;color:var(--text-light);">找不到圖片，請換關鍵字試試</p>';
+          return;
+        }
+        resultsDiv.innerHTML = '<div class="img-search-grid">' + images.map(src => `<img src="${src}" data-src="${src}" />`).join('') + '</div>';
+        resultsDiv.querySelectorAll('img').forEach(img => {
+          img.onclick = () => {
+            resultsDiv.innerHTML = '<p style="text-align:center;color:var(--text-light);">載入中...</p>';
+            resizeImageUrlToBase64(img.dataset.src, 300, (b64) => {
+              if (b64) {
+                viewParams.pendingImage = b64;
+                updateImagePreview();
+                modal.remove();
+              } else {
+                resultsDiv.innerHTML = '<p style="text-align:center;color:var(--danger);">圖片載入失敗，請選其他圖片</p>';
+              }
+            });
+          };
+        });
+      }).catch(() => {
+        resultsDiv.innerHTML = '<p style="text-align:center;color:var(--danger);">搜尋失敗，請檢查網路連線</p>';
+      });
+    };
+    modal.querySelector('#imgSearchBtn').onclick = doSearch;
+    modal.querySelector('#imgSearchKeyword').addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
+    // Auto search if keyword exists
+    if (keyword) doSearch();
+  },
+  clearPendingImage: () => {
+    viewParams.pendingImage = null;
+    updateImagePreview();
   },
   translateEnglish: () => {
     const rawText = document.getElementById('wordText').value.trim();
